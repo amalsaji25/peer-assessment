@@ -1,7 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-
-<!-- https://www.playframework.com/documentation/latest/SettingsLogger -->
-
 <!DOCTYPE configuration>
 
 <configuration>
@@ -10,41 +7,38 @@
   <import class="ch.qos.logback.core.FileAppender"/>
   <import class="ch.qos.logback.core.ConsoleAppender"/>
 
-  <appender name="FILE" class="FileAppender">
-    <file>${application.home:-.}/logs/application.log</file>
-    <encoder class="PatternLayoutEncoder">
+  <!-- Write logs to a file -->
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>logs/application.log</file>  <!-- Ensure correct log file path -->
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
       <charset>UTF-8</charset>
-      <pattern>%d{yyyy-MM-dd HH:mm:ss} %highlight(%-5level) %cyan(%logger{36}) %magenta(%X{pekkoSource}) %msg%n</pattern>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss} %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
     </encoder>
   </appender>
 
-  <appender name="STDOUT" class="ConsoleAppender">
-    <!--
-         On Windows, enabling Jansi is recommended to benefit from color code interpretation on DOS command prompts,
-         which otherwise risk being sent ANSI escape sequences that they cannot interpret.
-         See https://logback.qos.ch/manual/layouts.html#coloring
-    -->
-    <!-- <withJansi>true</withJansi> -->
-    <encoder class="PatternLayoutEncoder">
+  <!-- Print logs to the console -->
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
       <charset>UTF-8</charset>
-      <pattern>%d{yyyy-MM-dd HH:mm:ss} %highlight(%-5level) %cyan(%logger{36}) %magenta(%X{pekkoSource}) %msg%n</pattern>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss} %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
     </encoder>
   </appender>
 
-  <appender name="ASYNCFILE" class="AsyncAppender">
+  <!-- Enable Async Logging -->
+  <appender name="ASYNCFILE" class="ch.qos.logback.classic.AsyncAppender">
     <appender-ref ref="FILE"/>
   </appender>
 
-  <appender name="ASYNCSTDOUT" class="AsyncAppender">
+  <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
     <appender-ref ref="STDOUT"/>
   </appender>
 
+  <!-- Set log levels -->
   <logger name="play" level="INFO"/>
-  <logger name="application" level="DEBUG"/>
+  <logger name="application" level="DEBUG"/>  <!-- Ensure application logs are shown -->
 
-  <root level="WARN">
+  <root level="INFO">  <!-- Change to INFO instead of WARN -->
     <appender-ref ref="ASYNCFILE"/>
     <appender-ref ref="ASYNCSTDOUT"/>
   </root>
-
 </configuration>

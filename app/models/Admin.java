@@ -1,6 +1,7 @@
 package models;
 
 import jakarta.persistence.*;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.io.Serializable;
 
@@ -22,7 +23,7 @@ public class Admin implements Serializable {
 
     public Admin(String username, String password){
         this.username = username;
-        this.password = password;
+        this.password = BCrypt.hashpw(password, BCrypt.gensalt());
     }
 
     public Long getId() {

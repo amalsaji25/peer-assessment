@@ -1,6 +1,6 @@
 package repository;
 
-import models.Users;
+import models.Enrollments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import play.db.jpa.JPAApi;
@@ -8,52 +8,32 @@ import play.db.jpa.JPAApi;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Singleton
-public class UserRepository implements Repository<Users> {
+public class EnrollmentRepository implements Repository<Enrollments> {
 
     private final JPAApi jpaApi;
-    private static final Logger log = LoggerFactory.getLogger(UserRepository.class);
+    private static final Logger log = LoggerFactory.getLogger(EnrollmentRepository.class);
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
-
     @Inject
-    public  UserRepository(JPAApi jpaApi) {
+    public EnrollmentRepository(JPAApi jpaApi) {
         this.jpaApi = jpaApi;
     }
 
-    public Optional<Users> findById(String userId){
-        try{
-             return jpaApi.withTransaction(entityManager -> {
-                Users user = entityManager.find(Users.class, userId);
-                if(user != null){
-                    log.info("User with id {} found", userId);
-                    return Optional.of(user);
-                }
-                else{
-                    log.warn("User with id {} not found", userId);
-                    return Optional.empty();
-                }
-            });
-        }catch (Exception e) {
-            log.error("failed to find user with id {} - with exception: {}", userId, e.getMessage());
-            return Optional.empty();
-        }
-    }
-
+    /**
+     * Bulk save enrollments using batch processing.
+     */
     @Override
-    public CompletionStage<Map<String, Object>> saveAll(List<Users> users) {
+    public CompletionStage<Map<String, Object>> saveAll(List<Enrollments> enrollments) {
         int batchSize = 100;
 
         // Split into batches
-        List<List<Users>> batches = new ArrayList<>();
-        for (int i = 0; i < users.size(); i += batchSize) {
-            batches.add(users.subList(i, Math.min(i + batchSize, users.size())));
+        List<List<Enrollments>> batches = new ArrayList<>();
+        for (int i = 0; i < enrollments.size(); i += batchSize) {
+            batches.add(enrollments.subList(i, Math.min(i + batchSize, enrollments.size())));
         }
 
         // Process each batch asynchronously
@@ -63,17 +43,18 @@ public class UserRepository implements Repository<Users> {
                         int successCount = 0;
                         List<String> failedRecords = new ArrayList<>();
 
-                        for (Users user : batch) {
+                        for (Enrollments enrollment : batch) {
                             try {
-                                entityManager.persist(user);
+                                entityManager.persist(enrollment);
                                 successCount++;
                             } catch (Exception e) {
-                                failedRecords.add(user.getUserId());
-                                System.err.println("Failed to save user ID: " + user.getUserId() + " - " + e.getMessage());
+                                failedRecords.add("Student: " + enrollment.getStudent().getUserId() +
+                                        ", Course: " + enrollment.getCourse().getCourseCode());
+                                log.error("Failed to save enrollment for Student: {} in Course: {} - {}",
+                                        enrollment.getStudent().getUserId(), enrollment.getCourse().getCourseCode(), e.getMessage());
                             }
                         }
 
-                        // Ensure batch commit
                         entityManager.flush();
                         entityManager.clear(); // Helps with memory management
 
@@ -84,7 +65,7 @@ public class UserRepository implements Repository<Users> {
                         response.put("failedRecords", failedRecords);
                         return response;
                     });
-                }, executorService)) // Run each batch in parallel
+                }, executorService))
                 .collect(Collectors.toList());
 
         // Wait for all futures to complete and aggregate results

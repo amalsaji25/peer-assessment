@@ -2,6 +2,7 @@ package models;
 
 
 import jakarta.persistence.*;
+import models.enums.ReviewStatus;
 
 import java.io.Serializable;
 
@@ -28,8 +29,6 @@ public class ReviewTasks implements Serializable {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private ReviewStatus status = ReviewStatus.PENDING;  // Default: Pending
-
-    public enum ReviewStatus { PENDING, COMPLETED }
 
     public ReviewTasks() {}
 

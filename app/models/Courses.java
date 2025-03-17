@@ -2,7 +2,6 @@ package models;
 
 
 import jakarta.persistence.*;
-import repository.UserRepository;
 
 import java.io.Serializable;
 import java.util.List;
@@ -27,12 +26,10 @@ public class Courses implements Serializable {
 
     public Courses(){}
 
-    public Courses(String courseCode, String courseName, String professorId, UserRepository userRepository) {
+    public Courses(String courseCode, String courseName, Users professor) {
         this.courseCode = courseCode;
         this.courseName = courseName;
-
-    this.professor =
-        userRepository.findById(professorId).orElseThrow(() -> new IllegalArgumentException("Professor not found with id " + professorId));
+        this.professor = professor;
     }
 
     public String getCourseCode() {

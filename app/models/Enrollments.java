@@ -25,9 +25,9 @@ public class Enrollments implements Serializable {
 
     public Enrollments(){}
 
-    public Enrollments(String studentId, String courseCode, UserRepository userRepository, CourseRepository courseRepository) {
-        this.student = userRepository.findById(studentId).orElseThrow(() -> new IllegalArgumentException("Student not found with id " + studentId));
-        this.course = courseRepository.findByCourseCode(courseCode).orElseThrow(() -> new IllegalArgumentException("Course not found with id " + courseCode));
+    public Enrollments(Users student, Courses course) {
+        this.student = student;
+        this.course = course;
     }
 
     public Long getEnrollmentId() {

@@ -1,0 +1,53 @@
+name: Play Framework CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'sbt'
+
+      - name: Install SBT
+        run: |
+          curl -L https://github.com/sbt/sbt/releases/download/v1.9.7/sbt-1.9.7.tgz | tar xz
+          echo "$(pwd)/sbt/bin" >> $GITHUB_PATH
+
+      - name: Cache SBT dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.ivy2/cache
+            ~/.sbt
+            ~/.cache/coursier
+          key: sbt-${{ runner.os }}-${{ hashFiles('**/build.sbt') }}
+          restore-keys: |
+            sbt-${{ runner.os }}-
+
+      - name: Run unit tests with Mockito
+        run: sbt test
+
+      - name: Run Tests with JaCoCo Coverage
+        run: sbt jacoco
+
+      - name: Upload JaCoCo Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/scala-2.13/jacoco/report
+          retention-days: 7

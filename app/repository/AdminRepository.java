@@ -8,9 +8,11 @@ import play.db.jpa.JPAApi;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 @Singleton
-public class AdminRepository {
+public class AdminRepository implements Repository<Admin> {
 
     private final JPAApi jpaApi;
     private static final Logger log = LoggerFactory.getLogger(AdminRepository.class);
@@ -43,17 +45,9 @@ public class AdminRepository {
     }
 
 
-    public boolean isSchemaInitialized() {
-        try {
-            return jpaApi.withTransaction(entityManager -> {
-                entityManager.createQuery("SELECT COUNT(u) FROM Users u").getSingleResult();
-                entityManager.createQuery("SELECT COUNT(c) FROM Courses c").getSingleResult();
-                log.info("Database schema is correctly initialized.");
-                return true;
-            });
-        } catch (Exception e) {
-            log.error("Schema validation failed: {}", e.getMessage(), e);
-            return false;
-        }
+
+    @Override
+    public CompletionStage<Map<String, Object>> saveAll(List<Admin> records) {
+        return null;
     }
 }

@@ -50,8 +50,8 @@ public class CSVProcessor<T> implements FileProcessor {
                                     .get())
             ) {
                 // Validate CSV Header Order
-                Set<String> actualHeaders = csvParser.getHeaderMap().keySet();
-                if (!validations.validateFieldOrder(new ArrayList<>(actualHeaders))) {
+                List<String> actualHeaders = new ArrayList<>(csvParser.getHeaderNames());
+                if (!validations.validateFieldOrder(actualHeaders)) {
                     log.warn("CSV file has incorrect field order.");
                     return CompletableFuture.completedFuture(Results.badRequest("CSV file has incorrect field order."));
                 }

@@ -11,7 +11,7 @@ public class UserEntityMapper implements EntityMapper<Users>{
     @Override
     public Users mapToEntity(CSVRecord record) {
         return new Users(
-                record.get("user_id"),
+                Long.parseLong(record.get("user_id")),
                 record.get("email"),
                 record.get("password"),
                 record.get("first_name"),

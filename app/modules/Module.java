@@ -1,5 +1,7 @@
 package modules;
 
+import authorization.Authorization;
+import authorization.RoleBasedAuthorization;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -13,6 +15,8 @@ import repository.CourseRepository;
 import repository.EnrollmentRepository;
 import repository.Repository;
 import repository.UserRepository;
+import services.AuthorizationService;
+import services.DashBoardRedirectService;
 import services.mappers.CourseEntityMapper;
 import services.mappers.EnrollmentEntityMapper;
 import services.mappers.EntityMapper;
@@ -32,6 +36,12 @@ public class Module extends AbstractModule {
         bind(new TypeLiteral<Repository<Users>>() {}).to(UserRepository.class).in(Singleton.class);
         bind(new TypeLiteral<Repository<Courses>>() {}).to(CourseRepository.class).in(Singleton.class);
         bind(new TypeLiteral<Repository<Enrollments>>() {}).to(EnrollmentRepository.class).in(Singleton.class);
+
+        // Bind DashBoardRedirectService
+        bind(DashBoardRedirectService.class).asEagerSingleton();
+
+        // Bind Authorization implementations
+        bind(Authorization.class).to(RoleBasedAuthorization.class);
 
         // Bind EntityMapper implementations
         bind(new TypeLiteral<EntityMapper<Users>>() {}).to(UserEntityMapper.class).in(Singleton.class);

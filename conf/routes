@@ -2,6 +2,17 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+# Authentication Routes
+GET     /                           controllers.AuthController.login(request: play.mvc.Http.Request)
+POST    /login                      controllers.AuthController.authenticate(request: play.mvc.Http.Request)
+GET     /logout                     controllers.AuthController.logout(request: play.mvc.Http.Request)
+
+
+# Role Based Routes (Protected)
+GET     /admin/dashboard            controllers.AdminController.dashboard(request: play.mvc.Http.Request)
+GET     /student/dashboard          controllers.StudentController.dashboard(request: play.mvc.Http.Request)
+GET     /professor/dashboard        controllers.ProfessorController.dashboard(request: play.mvc.Http.Request)
+
 POST    /admin/uploadFile   controllers.AdminController.uploadFile(request: play.mvc.Http.Request)
 
 # Map static resources from the /public folder to the /assets URL path

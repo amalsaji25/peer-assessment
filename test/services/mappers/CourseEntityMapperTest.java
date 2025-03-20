@@ -38,9 +38,9 @@ public class CourseEntityMapperTest {
     public void testMapToEntityShouldReturnCourseWhenProfessorExists() {
         when(csvRecord.get("course_code")).thenReturn("CS101");
         when(csvRecord.get("course_name")).thenReturn("Computer Science");
-        when(csvRecord.get("professor_id")).thenReturn("P123");
+        when(csvRecord.get("professor_id")).thenReturn(String.valueOf(123L));
 
-        when(userRepository.findById("P123")).thenReturn(Optional.of(mockProfessor));
+        when(userRepository.findById(123L)).thenReturn(Optional.of(mockProfessor));
 
         Courses course = courseEntityMapper.mapToEntity(csvRecord);
 
@@ -55,9 +55,9 @@ public class CourseEntityMapperTest {
     public void testMapToEntityShouldReturnCourseWithNullProfessorWhenProfessorDoesNotExist() {
         when(csvRecord.get("course_code")).thenReturn("CS102");
         when(csvRecord.get("course_name")).thenReturn("Data Structures");
-        when(csvRecord.get("professor_id")).thenReturn("P999");
+        when(csvRecord.get("professor_id")).thenReturn(String.valueOf(999L));
 
-        when(userRepository.findById("P999")).thenReturn(Optional.empty());
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         Courses course = courseEntityMapper.mapToEntity(csvRecord);
 

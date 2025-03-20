@@ -26,7 +26,7 @@ public class UserEntityMapperTest {
     /** Test Valid User Mapping **/
     @Test
     public void testMapToEntityShouldReturnUserWhenAllFieldsArePresent() {
-        when(csvRecord.get("user_id")).thenReturn("U123");
+        when(csvRecord.get("user_id")).thenReturn(String.valueOf(123L));
         when(csvRecord.get("email")).thenReturn("user@example.com");
         when(csvRecord.get("password")).thenReturn("password123");
         when(csvRecord.get("first_name")).thenReturn("John");
@@ -38,7 +38,7 @@ public class UserEntityMapperTest {
         Users user = userEntityMapper.mapToEntity(csvRecord);
 
         assertNotNull(user);
-        assertEquals("U123", user.getUserId());
+        assertEquals(Long.valueOf(123L), user.getUserId());
         assertEquals("user@example.com", user.getEmail());
         assertEquals("John", user.getFirstName());
         assertEquals("M", user.getMiddleName());
@@ -49,7 +49,7 @@ public class UserEntityMapperTest {
     /** Test Missing Middle Name **/
     @Test
     public void testMapToEntityShouldAssignEmptyStringWhenMiddleNameIsMissing() {
-        when(csvRecord.get("user_id")).thenReturn("U123");
+        when(csvRecord.get("user_id")).thenReturn(String.valueOf(123L));
         when(csvRecord.get("email")).thenReturn("user@example.com");
         when(csvRecord.get("password")).thenReturn("password123");
         when(csvRecord.get("first_name")).thenReturn("John");
@@ -60,7 +60,7 @@ public class UserEntityMapperTest {
         Users user = userEntityMapper.mapToEntity(csvRecord);
 
         assertNotNull(user);
-        assertEquals("U123", user.getUserId());
+        assertEquals(Long.valueOf(123L), user.getUserId());
         assertEquals("John", user.getFirstName());
         assertEquals("", user.getMiddleName());  // Middle name should be an empty string
         assertEquals("Doe", user.getLastName());
@@ -70,7 +70,7 @@ public class UserEntityMapperTest {
     /** Test Handling of Empty Fields **/
     @Test
     public void testMapToEntityShouldHandleEmptyFields() {
-        when(csvRecord.get("user_id")).thenReturn("");
+        when(csvRecord.get("user_id")).thenReturn(String.valueOf(0L));
         when(csvRecord.get("email")).thenReturn("");
         when(csvRecord.get("password")).thenReturn("");
         when(csvRecord.get("first_name")).thenReturn("");
@@ -81,7 +81,7 @@ public class UserEntityMapperTest {
         Users user = userEntityMapper.mapToEntity(csvRecord);
 
         assertNotNull(user);
-        assertEquals("", user.getUserId());
+        assertEquals(Long.valueOf(0L), user.getUserId());
         assertEquals("", user.getEmail());
         assertEquals("", user.getFirstName());
         assertEquals("", user.getMiddleName());  // Empty due to missing field

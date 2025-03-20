@@ -44,22 +44,22 @@ public class UserRepositoryTest {
     @Test
     public void testFindByIdShouldReturnUserIfExists() {
         Users mockUser = mock(Users.class);
-        when(mockUser.getUserId()).thenReturn("U123");
+        when(mockUser.getUserId()).thenReturn(123L);
 
-        when(mockEntityManager.find(Users.class, "U123")).thenReturn(mockUser);
+        when(mockEntityManager.find(Users.class, 123L)).thenReturn(mockUser);
 
-        Optional<Users> result = userRepository.findById("U123");
+        Optional<Users> result = userRepository.findById(123L);
 
         assertTrue(result.isPresent());
-        assertEquals("U123", result.get().getUserId());
+        assertEquals(Long.valueOf(123L), result.get().getUserId());
     }
 
     /** Test findById() - should return empty if user not found **/
     @Test
     public void testFindByIdShouldReturnEmptyIfNotExists() {
-        when(mockEntityManager.find(Users.class, "U999")).thenReturn(null);
+        when(mockEntityManager.find(Users.class, 999L)).thenReturn(null);
 
-        Optional<Users> result = userRepository.findById("U999");
+        Optional<Users> result = userRepository.findById(999L);
 
         assertFalse(result.isPresent());
     }
@@ -67,9 +67,9 @@ public class UserRepositoryTest {
     /** Test findById() - should handle exceptions gracefully **/
     @Test
     public void testFindByIdShouldHandleExceptionGracefully() {
-        when(mockEntityManager.find(Users.class, "U123")).thenThrow(new RuntimeException("DB Error"));
+        when(mockEntityManager.find(Users.class, 123L)).thenThrow(new RuntimeException("DB Error"));
 
-        Optional<Users> result = userRepository.findById("U123");
+        Optional<Users> result = userRepository.findById(123L);
 
         assertFalse(result.isPresent());
     }
@@ -104,7 +104,7 @@ public class UserRepositoryTest {
         Users user3 = mock(Users.class);
 
         // Define behavior for getUserId() on each mock user
-        when(user2.getUserId()).thenReturn("U102");
+        when(user2.getUserId()).thenReturn(123L);
 
         // Create a list of users
         List<Users> users = Arrays.asList(user1, user2, user3);
@@ -121,6 +121,6 @@ public class UserRepositoryTest {
         // Validate results
         assertEquals(2, result.get("successCount"));
         assertEquals(1, result.get("failedCount"));
-        assertTrue(((List<String>) result.get("failedRecords")).contains("U102"));
+        assertTrue(((List<String>) result.get("failedRecords")).contains(123L));
     }
 }

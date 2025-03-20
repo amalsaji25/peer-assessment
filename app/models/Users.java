@@ -12,8 +12,8 @@ import java.util.List;
 public class Users implements Serializable {
 
     @Id
-    @Column(name="user_id", unique = true, nullable = false, length = 100)
-    private String userId;
+    @Column(name="user_id", unique = true, nullable = false)
+    private Long userId;
 
     @Column(name = "email", unique = true, nullable = false, length = 100)
     private String email;
@@ -31,7 +31,7 @@ public class Users implements Serializable {
     private String lastName;
 
     @Column(name = "role", nullable = false, length = 20)
-    @Pattern(regexp = "professor|student", message = "Role must be 'professor' or 'student'")
+    @Pattern(regexp = "professor|student|admin", message = "Role must be 'professor' or 'student' or 'admin'")
     private String role;
 
     @OneToMany(mappedBy = "student", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -39,7 +39,7 @@ public class Users implements Serializable {
 
     public Users(){}
 
-    public Users(String userId, String email, String password, String firstName, String middleName, String lastName, String role){
+    public Users(Long userId, String email, String password, String firstName, String middleName, String lastName, String role){
         this.userId = userId;
         this.email = email;
         this.password = password;
@@ -49,7 +49,12 @@ public class Users implements Serializable {
         this.role = role;
     }
 
-    public String getUserId(){
+    public Users(Long username, String role) {
+        this.userId = username;
+        this.role = role;
+    }
+
+    public Long getUserId(){
         return userId;
     }
 
@@ -75,5 +80,9 @@ public class Users implements Serializable {
 
     public List<Enrollments> getEnrollments() {
         return enrollments;
+    }
+
+    public String getPassword() {
+        return password;
     }
 }

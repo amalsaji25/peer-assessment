@@ -1,7 +1,11 @@
 package controllers;
 
+import models.enums.Roles;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import play.mvc.*;
-import services.AdminAuthenticatorService;
+import services.AuthenticationService;
+import services.AuthorizationService;
 import services.FileUploadService;
 
 import javax.inject.Inject;
@@ -9,24 +13,42 @@ import javax.inject.Singleton;
 
 import java.io.File;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import static models.enums.Roles.ADMIN;
 
 
-@Security.Authenticated(AdminAuthenticatorService.class)
+@Security.Authenticated(AuthenticationService.class)
 @Singleton
 public class AdminController extends Controller {
 
     private final FileUploadService fileUploadService;
 
+    private final AuthorizationService authorizationService;
+
+    private static final Set<Roles> ALLOWED_ROLES = Set.of(ADMIN);
+
+    private static final Logger log = LoggerFactory.getLogger(AdminController.class);
+
     @Inject
-    public AdminController(FileUploadService fileUploadService) {
+    public AdminController(FileUploadService fileUploadService, AuthorizationService authorizationService) {
         this.fileUploadService = fileUploadService;
+        this.authorizationService = authorizationService;
+    }
+
+    public Result dashboard(Http.Request request){
+        return ok(views.html.dashboard.render("Admin Dashboard"));
     }
 
     @BodyParser.Of(BodyParser.MultipartFormData.class)
     public CompletionStage<Result> uploadFile(Http.Request request) {
+        String sessionId = request.session().get("userId").orElse("NONE");
+        log.info("Session ID: {}", sessionId);
+        if(!authorizationService.isAuthorized(request, ALLOWED_ROLES)){
+            return CompletableFuture.completedFuture(unauthorized("Unauthorized access"));
+        }
         Http.MultipartFormData<play.libs.Files.TemporaryFile> body = request.body().asMultipartFormData();
         Optional<Http.MultipartFormData.FilePart<play.libs.Files.TemporaryFile>> filePart = Optional.ofNullable(body.getFile("file"));
 
@@ -53,7 +75,10 @@ public class AdminController extends Controller {
 
         // Process the uploaded file
         return fileUploadService.processFileUpload(uploadedFile.toPath().toFile(), fileType)
-                .thenApply(result -> result.status() == 200 ? ok("File uploaded successfully") : badRequest("File processing failed"));
+                .thenApply(result -> result.status() == 200 ? ok("File uploaded successfully")
+                        .withSession(AuthenticationService.updateSession(request))
+                        : badRequest("File processing failed")
+                        .withSession(AuthenticationService.updateSession(request)));
     }
 
 }

@@ -24,7 +24,7 @@ public class EnrollmentEntityMapper implements EntityMapper<Enrollments>{
 
     @Override
     public Enrollments mapToEntity(CSVRecord record) {
-        String studentId = record.get("student_id").trim();
+        Long studentId = Long.valueOf(record.get("student_id").trim());
         String courseId = record.get("course_id").trim();
 
         Users student = userRepository.findById(studentId).orElse(null);

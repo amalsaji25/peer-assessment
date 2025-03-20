@@ -51,38 +51,38 @@ public class UserValidationTest {
     /** Test Semantic Validation **/
     @Test
     public void testValidateSemanticsShouldReturnTrueWhenUserIsValid() {
-        when(mockUser.getUserId()).thenReturn("U123");
+        when(mockUser.getUserId()).thenReturn(123L);
         when(mockUser.getEmail()).thenReturn("valid@example.com");
         when(mockUser.getRole()).thenReturn("student");
-        when(userRepository.findById("U123")).thenReturn(Optional.empty());
+        when(userRepository.findById(123L)).thenReturn(Optional.empty());
 
         assertTrue(userValidation.validateSemantics(mockUser, userRepository));
     }
 
     @Test
     public void testValidateSemanticsShouldReturnFalseWhenUserAlreadyExists() {
-        when(mockUser.getUserId()).thenReturn("U123");
-        when(userRepository.findById("U123")).thenReturn(Optional.of(mockUser));
+        when(mockUser.getUserId()).thenReturn(123L);
+        when(userRepository.findById(123L)).thenReturn(Optional.of(mockUser));
 
         assertFalse(userValidation.validateSemantics(mockUser, userRepository));
     }
 
     @Test
     public void testValidateSemanticsShouldReturnFalseWhenEmailIsInvalid() {
-        when(mockUser.getUserId()).thenReturn("U123");
+        when(mockUser.getUserId()).thenReturn(123L);
         when(mockUser.getEmail()).thenReturn("invalid-email");
         when(mockUser.getRole()).thenReturn("student");
-        when(userRepository.findById("U123")).thenReturn(Optional.empty());
+        when(userRepository.findById(123L)).thenReturn(Optional.empty());
 
         assertFalse(userValidation.validateSemantics(mockUser, userRepository));
     }
 
     @Test
     public void testValidateSemanticsShouldReturnFalseWhenRoleIsInvalid() {
-        when(mockUser.getUserId()).thenReturn("U123");
+        when(mockUser.getUserId()).thenReturn(123L);
         when(mockUser.getEmail()).thenReturn("valid@example.com");
         when(mockUser.getRole()).thenReturn("admin"); // Invalid Role
-        when(userRepository.findById("U123")).thenReturn(Optional.empty());
+        when(userRepository.findById(123L)).thenReturn(Optional.empty());
 
         assertFalse(userValidation.validateSemantics(mockUser, userRepository));
     }

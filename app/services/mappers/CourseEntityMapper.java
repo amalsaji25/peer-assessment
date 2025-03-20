@@ -23,7 +23,7 @@ public class CourseEntityMapper implements EntityMapper<Courses> {
     public Courses mapToEntity(CSVRecord record) {
         String courseCode = record.get("course_code").trim();
         String courseName = record.get("course_name").trim();
-        String professorId = record.get("professor_id").trim();
+        Long professorId = Long.valueOf(record.get("professor_id").trim());
 
         Users professor = userRepository.findById(professorId).orElse(null);
 

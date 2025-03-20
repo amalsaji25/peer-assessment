@@ -27,7 +27,7 @@ public class UserRepository implements Repository<Users> {
         this.jpaApi = jpaApi;
     }
 
-    public Optional<Users> findById(String userId){
+    public Optional<Users> findById(Long userId){
         try{
              return jpaApi.withTransaction(entityManager -> {
                 Users user = entityManager.find(Users.class, userId);
@@ -61,7 +61,7 @@ public class UserRepository implements Repository<Users> {
                 .map(batch -> CompletableFuture.supplyAsync(() -> {
                     return jpaApi.withTransaction(entityManager -> {
                         int successCount = 0;
-                        List<String> failedRecords = new ArrayList<>();
+                        List<Long> failedRecords = new ArrayList<>();
 
                         for (Users user : batch) {
                             try {

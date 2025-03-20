@@ -1,0 +1,9 @@
+export DB_DRIVER="org.postgresql.Driver"
+export DB_URL="jdbc:postgresql://localhost:5432/peer_assessment"
+export DB_USERNAME="amal"
+export DB_PASSWORD="P@ssw0rd@123"
+export DB_AUTO_UPDATE="update"
+export PLAY_MODE="dev"
+export PLAY_SECRET="xxxxxx-afagal;gfmaga-afafgmalgjagmak.lngm-asdafagfagfv"
+
+sbt start

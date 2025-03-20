@@ -79,7 +79,7 @@ public class EnrollmentRepositoryTest {
         Users mockProfessor = mock(Users.class);
         Courses course = new Courses("CS101", "Computer Science", mockProfessor);
 
-        when(mockStudent1.getUserId()).thenReturn("U102");
+        when(mockStudent1.getUserId()).thenReturn(102L);
 
         Enrollments enrollment1 = new Enrollments(mockStudent, course);
         Enrollments enrollment2 = new Enrollments(mockStudent1, course);
@@ -98,6 +98,6 @@ public class EnrollmentRepositoryTest {
         assertEquals(1, result.get("successCount"));
         assertEquals(1, result.get("failedCount"));
         assertTrue(((List<String>) result.get("failedRecords"))
-                .contains("Student: U102, Course: CS101"));
+                .contains("Student: 102, Course: CS101"));
     }
 }

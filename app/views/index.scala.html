@@ -1,5 +1,43 @@
-@()
+@import play.filters.csrf.CSRF
 
-@main("Welcome to Play") {
-  <h1>Welcome to Play!</h1>
-}
+@(request: play.mvc.Http.Request)
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peer Assessment - Login</title>
+    <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/index.css")">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@@300;400;500;600;700&display=swap">
+    <meta name="csrf-token" content="@CSRF.getToken(request).map(_.value).getOrElse("")">
+  </head>
+  <body>
+
+    <div id="login-container" >
+      <div id="login-card">
+        <div id="login-card-header">
+          <h1>Peer Assessment System</h1>
+          <p>Sign in to continue</p>
+        </div>
+        <form id="login-form">
+          <div class="login-data">
+            <label for="User-Id">Name:</label>
+            <input type="text" id="userId" name="userId" placeholder="Enter your user-id" required>
+          </div>
+
+            <div class="login-data">
+              <label for="password">Password:</label>
+              <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            </div>
+            <button type = "submit" class="login-button">Submit</button>
+        </form>
+        <div id="login-card-footer">
+          <p>@@2025 Peer Assessment System</p>
+        </div>
+      </div>
+    </div>
+
+    <script src="@routes.Assets.versioned("javascripts/index.js")"></script>
+
+  </body>
+</html>

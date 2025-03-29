@@ -1,0 +1,93 @@
+/* Custom styles */
+body {
+    overflow-x: hidden;
+}
+
+#sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 250px;
+    z-index: 1000;
+    background-color: #f8f9fa;
+    border-right: 1px solid #dee2e6;
+    transition: all 0.3s;
+    overflow-y: auto;
+}
+
+#sidebar.collapsed {
+    margin-left: -250px;
+}
+
+#content {
+    margin-left: 250px;
+    transition: all 0.3s;
+}
+
+#content.expanded {
+    margin-left: 0;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #0d6efd;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.nav-link.active {
+    background-color: #0d6efd;
+    color: white !important;
+}
+
+.status-submitted {
+    background-color: #198754;
+}
+
+.status-pending {
+    background-color: #fd7e14;
+}
+
+.status-late {
+    background-color: #dc3545;
+}
+
+.rating-stars {
+    color: #ffc107;
+}
+
+@media (max-width: 768px) {
+    #sidebar {
+        margin-left: -250px;
+    }
+
+    #sidebar.show {
+        margin-left: 0;
+    }
+
+    #content {
+        margin-left: 0;
+    }
+
+    .overlay {
+        display: none;
+        position: fixed;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        opacity: 0;
+        transition: all 0.5s ease-in-out;
+    }
+
+    .overlay.show {
+        display: block;
+        opacity: 1;
+    }
+}

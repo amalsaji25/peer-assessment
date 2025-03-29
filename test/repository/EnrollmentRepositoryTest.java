@@ -1,8 +1,8 @@
 package repository;
 
-import models.Courses;
-import models.Enrollments;
-import models.Users;
+import models.Course;
+import models.Enrollment;
+import models.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -11,6 +11,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import play.db.jpa.JPAApi;
 
 import jakarta.persistence.EntityManager;
+import repository.core.EnrollmentRepository;
+
 import java.util.*;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -47,18 +49,18 @@ public class EnrollmentRepositoryTest {
      */
     @Test
     public void testSaveAllShouldSaveEnrollmentsSuccessfully() {
-        Users mockStudent = mock(Users.class);
-        Users mockStudent1 = mock(Users.class);
-        Users mockProfessor = mock(Users.class);
-        Courses course = new Courses("CS101", "Computer Science", mockProfessor);
+        User mockStudent = mock(User.class);
+        User mockStudent1 = mock(User.class);
+        User mockProfessor = mock(User.class);
+        Course course = new Course("CS101", "Computer Science", mockProfessor);
 
-        List<Enrollments> enrollments = Arrays.asList(
-                new Enrollments(mockStudent, course),
-                new Enrollments(mockStudent1, course)
+        List<Enrollment> enrollments = Arrays.asList(
+                new Enrollment(mockStudent, course),
+                new Enrollment(mockStudent1, course)
         );
 
         // Simulate persistence success
-        doNothing().when(mockEntityManager).persist(any(Enrollments.class));
+        doNothing().when(mockEntityManager).persist(any(Enrollment.class));
 
         // Execute the method
         CompletionStage<Map<String, Object>> resultStage = enrollmentRepository.saveAll(enrollments);
@@ -74,17 +76,17 @@ public class EnrollmentRepositoryTest {
      */
     @Test
     public void testSaveAllShouldHandleEnrollmentFailures() {
-        Users mockStudent = mock(Users.class);
-        Users mockStudent1 = mock(Users.class);
-        Users mockProfessor = mock(Users.class);
-        Courses course = new Courses("CS101", "Computer Science", mockProfessor);
+        User mockStudent = mock(User.class);
+        User mockStudent1 = mock(User.class);
+        User mockProfessor = mock(User.class);
+        Course course = new Course("CS101", "Computer Science", mockProfessor);
 
         when(mockStudent1.getUserId()).thenReturn(102L);
 
-        Enrollments enrollment1 = new Enrollments(mockStudent, course);
-        Enrollments enrollment2 = new Enrollments(mockStudent1, course);
+        Enrollment enrollment1 = new Enrollment(mockStudent, course);
+        Enrollment enrollment2 = new Enrollment(mockStudent1, course);
 
-        List<Enrollments> enrollments = Arrays.asList(enrollment1, enrollment2);
+        List<Enrollment> enrollments = Arrays.asList(enrollment1, enrollment2);
 
         // Simulate persistence success for the first, failure for the second
         doNothing().when(mockEntityManager).persist(enrollment1);

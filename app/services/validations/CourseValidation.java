@@ -1,17 +1,17 @@
 package services.validations;
 
-import models.Courses;
+import models.Course;
 import org.apache.commons.csv.CSVRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import repository.CourseRepository;
-import repository.Repository;
+import repository.core.CourseRepository;
+import repository.core.Repository;
 
 import javax.inject.Singleton;
 import java.util.List;
 
 @Singleton
-public class CourseValidation implements Validations<Courses> {
+public class CourseValidation implements Validations<Course> {
 
     private static final Logger log = LoggerFactory.getLogger(CourseValidation.class);
     private static final List<String> MANDATORY_FIELDS = List.of("course_code", "course_name", "professor_id");
@@ -28,7 +28,7 @@ public class CourseValidation implements Validations<Courses> {
     }
 
     @Override
-    public boolean validateSemantics(Courses record, Repository<Courses> repository) {
+    public boolean validateSemantics(Course record, Repository<Course> repository) {
         CourseRepository courseRepository = (CourseRepository) repository;
 
         // Check if the course already exists

@@ -1,17 +1,17 @@
 package services.mappers;
 
-import models.Courses;
-import models.Enrollments;
-import models.Users;
+import models.Course;
+import models.Enrollment;
+import models.User;
 import org.apache.commons.csv.CSVRecord;
-import repository.CourseRepository;
-import repository.UserRepository;
+import repository.core.CourseRepository;
+import repository.core.UserRepository;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class EnrollmentEntityMapper implements EntityMapper<Enrollments>{
+public class EnrollmentEntityMapper implements EntityMapper<Enrollment>{
 
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
@@ -23,13 +23,13 @@ public class EnrollmentEntityMapper implements EntityMapper<Enrollments>{
     }
 
     @Override
-    public Enrollments mapToEntity(CSVRecord record) {
+    public Enrollment mapToEntity(CSVRecord record) {
         Long studentId = Long.valueOf(record.get("student_id").trim());
-        String courseId = record.get("course_id").trim();
+        String courseCode = record.get("course_code").trim();
 
-        Users student = userRepository.findById(studentId).orElse(null);
-        Courses course = courseRepository.findByCourseCode(courseId).orElse(null);
+        User student = userRepository.findById(studentId).orElse(null);
+        Course course = courseRepository.findByCourseCode(courseCode).orElse(null);
 
-    return new Enrollments(student, course);
+    return new Enrollment(student, course);
   }
 }

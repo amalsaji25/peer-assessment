@@ -34,6 +34,9 @@ libraryDependencies ++= Seq(
   // CSV Parsing
   "org.apache.commons" % "commons-csv" % "1.13.0",
 
+  // Reporting
+  "org.apache.poi" % "poi-ooxml" % "5.2.3",
+
   // Testing Dependencies
   "org.mockito" % "mockito-core" % "5.3.1" % Test,
   "org.mockito" % "mockito-junit-jupiter" % "5.3.1" % Test,

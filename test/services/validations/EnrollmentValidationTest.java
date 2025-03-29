@@ -1,15 +1,15 @@
 package services.validations;
 
-import models.Courses;
-import models.Enrollments;
-import models.Users;
+import models.Course;
+import models.Enrollment;
+import models.User;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import repository.Repository;
+import repository.core.Repository;
 
 import java.util.*;
 
@@ -21,13 +21,13 @@ public class EnrollmentValidationTest {
     private EnrollmentValidation enrollmentValidation;
 
     @Mock
-    private Repository<Enrollments> repository;
+    private Repository<Enrollment> repository;
 
     @Mock
     private CSVRecord csvRecord;
 
     @Mock
-    private Enrollments mockEnrollment;
+    private Enrollment mockEnrollment;
 
     @Before
     public void setUp() {
@@ -54,8 +54,8 @@ public class EnrollmentValidationTest {
     /** Test Semantic Validation **/
     @Test
     public void testValidateSemanticsShouldReturnTrueWhenStudentAndCourseExist() {
-        Courses mockCourse = Mockito.mock(Courses.class);
-        Users mockUser = Mockito.mock(Users.class);
+        Course mockCourse = Mockito.mock(Course.class);
+        User mockUser = Mockito.mock(User.class);
         when(mockEnrollment.getStudent()).thenReturn(mockUser);
         when(mockEnrollment.getCourse()).thenReturn(mockCourse);
 
@@ -64,7 +64,7 @@ public class EnrollmentValidationTest {
 
     @Test
     public void testValidateSemanticsShouldReturnFalseWhenStudentIsNull() {
-        Courses mockCourse = Mockito.mock(Courses.class);
+        Course mockCourse = Mockito.mock(Course.class);
         when(mockEnrollment.getStudent()).thenReturn(null);
         when(mockEnrollment.getCourse()).thenReturn(mockCourse);
 
@@ -73,7 +73,7 @@ public class EnrollmentValidationTest {
 
     @Test
     public void testValidateSemanticsShouldReturnFalseWhenCourseIsNull() {
-        Users mockUser = Mockito.mock(Users.class);
+        User mockUser = Mockito.mock(User.class);
         when(mockEnrollment.getStudent()).thenReturn(mockUser);
         when(mockEnrollment.getCourse()).thenReturn(null);
 
@@ -83,14 +83,14 @@ public class EnrollmentValidationTest {
     /** Test Field Order Validation **/
     @Test
     public void testValidateFieldOrderShouldReturnTrueWhenOrderIsCorrect() {
-        List<String> correctHeaders = Arrays.asList("student_id", "course_id");
+        List<String> correctHeaders = Arrays.asList("student_id", "course_code");
 
         assertTrue(enrollmentValidation.validateFieldOrder(correctHeaders));
     }
 
     @Test
     public void testValidateFieldOrderShouldReturnFalseWhenOrderIsIncorrect() {
-        List<String> incorrectHeaders = Arrays.asList("course_id", "student_id");
+        List<String> incorrectHeaders = Arrays.asList("course_code", "student_id");
 
         assertFalse(enrollmentValidation.validateFieldOrder(incorrectHeaders));
     }

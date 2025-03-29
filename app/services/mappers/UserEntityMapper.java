@@ -1,21 +1,20 @@
 package services.mappers;
 
-import models.Users;
+import models.User;
 import org.apache.commons.csv.CSVRecord;
 
 import javax.inject.Singleton;
 
 
 @Singleton
-public class UserEntityMapper implements EntityMapper<Users>{
+public class UserEntityMapper implements EntityMapper<User>{
     @Override
-    public Users mapToEntity(CSVRecord record) {
-        return new Users(
+    public User mapToEntity(CSVRecord record) {
+        return new User(
                 Long.parseLong(record.get("user_id")),
                 record.get("email"),
                 record.get("password"),
                 record.get("first_name"),
-                record.isMapped("middle_name") ? record.get("middle_name") : "",
                 record.get("last_name"),
                 record.get("role")
         );

@@ -1,19 +1,19 @@
 package services.validations;
 
-import models.Enrollments;
+import models.Enrollment;
 import org.apache.commons.csv.CSVRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import repository.Repository;
+import repository.core.Repository;
 import javax.inject.Singleton;
 import java.util.List;
 
 @Singleton
-public class EnrollmentValidation implements Validations<Enrollments> {
+public class EnrollmentValidation implements Validations<Enrollment> {
 
     private static final Logger log = LoggerFactory.getLogger(EnrollmentValidation.class);
-    private static final List<String> MANDATORY_FIELDS = List.of("student_id", "course_id");
-    private static final List<String> EXPECTED_FIELDS_ORDER = List.of("student_id", "course_id");
+    private static final List<String> MANDATORY_FIELDS = List.of("student_id", "course_code");
+    private static final List<String> EXPECTED_FIELDS_ORDER = List.of("student_id", "course_code");
 
     @Override
     public boolean validateSyntax(CSVRecord record) {
@@ -26,7 +26,7 @@ public class EnrollmentValidation implements Validations<Enrollments> {
     }
 
     @Override
-    public boolean validateSemantics(Enrollments record, Repository<Enrollments> repository) {
+    public boolean validateSemantics(Enrollment record, Repository<Enrollment> repository) {
         // Ensure student exists
         if (record.getStudent() == null) {
             log.warn("Invalid student ID: {} for enrollment", record.getStudent());

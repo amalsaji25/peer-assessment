@@ -1,7 +1,6 @@
 package services;
 
 import authorization.Authorization;
-import authorization.RoleBasedAuthorization;
 import models.enums.Roles;
 import play.mvc.Http;
 

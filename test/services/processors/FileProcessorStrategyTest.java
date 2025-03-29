@@ -25,11 +25,15 @@ public class FileProcessorStrategyTest {
     @Named("enrollments")
     private FileProcessor enrollmentProcessor;
 
+    @Mock
+    @Named("reviewTasks")
+    private FileProcessor reviewTaskProcessor;
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
 
-        fileProcessorStrategy = new FileProcessorStrategy(userProcessor, courseProcessor, enrollmentProcessor);
+        fileProcessorStrategy = new FileProcessorStrategy(userProcessor, courseProcessor, enrollmentProcessor, reviewTaskProcessor);
     }
 
     @Test

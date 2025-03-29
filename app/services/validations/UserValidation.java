@@ -1,22 +1,22 @@
 package services.validations;
 
-import models.Users;
+import models.User;
 import org.apache.commons.csv.CSVRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import repository.Repository;
-import repository.UserRepository;
+import repository.core.Repository;
+import repository.core.UserRepository;
 
 import javax.inject.Singleton;
 import java.util.List;
 import java.util.regex.Pattern;
 
 @Singleton
-public class UserValidation implements Validations<Users>{
+public class UserValidation implements Validations<User>{
 
     private static final Logger log = LoggerFactory.getLogger(UserValidation.class);
     private static final List<String> mandatoryFields = List.of("user_id", "email", "password", "first_name", "last_name","role");
-    private static final List<String> expectedFieldsOrder = List.of("user_id", "email", "password", "first_name","middle_name", "last_name", "role");
+    private static final List<String> expectedFieldsOrder = List.of("user_id", "email", "password", "first_name", "last_name", "role");
     private static final List<String> ALLOWED_ROLES = List.of("student", "professor");
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
 
@@ -31,7 +31,7 @@ public class UserValidation implements Validations<Users>{
     }
 
     @Override
-    public boolean validateSemantics(Users record, Repository<Users> repository) {
+    public boolean validateSemantics(User record, Repository<User> repository) {
         UserRepository userRepository = (UserRepository) repository;
 
         if(userRepository.findById(record.getUserId()).isPresent()) {

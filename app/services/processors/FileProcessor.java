@@ -1,10 +1,10 @@
 package services.processors;
 
-import play.mvc.Result;
-
 import java.nio.file.Path;
-import java.util.concurrent.CompletionStage;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
-public interface FileProcessor {
-    CompletionStage<Result> processFile(Path filePath, String fileType);
+public interface FileProcessor<T> {
+    CompletableFuture<List<T>> parseAndProcessFile(Path filePath);
+    CompletableFuture<String> saveProcessedFileData(List<T> processedData);
 }

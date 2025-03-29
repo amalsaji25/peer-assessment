@@ -1,6 +1,6 @@
 package repository;
 
-import models.Users;
+import models.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,6 +9,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import play.db.jpa.JPAApi;
 
 import jakarta.persistence.EntityManager;
+import repository.core.UserRepository;
+
 import java.util.*;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -43,12 +45,12 @@ public class UserRepositoryTest {
     /** Test findById() - should return user if found **/
     @Test
     public void testFindByIdShouldReturnUserIfExists() {
-        Users mockUser = mock(Users.class);
+        User mockUser = mock(User.class);
         when(mockUser.getUserId()).thenReturn(123L);
 
-        when(mockEntityManager.find(Users.class, 123L)).thenReturn(mockUser);
+        when(mockEntityManager.find(User.class, 123L)).thenReturn(mockUser);
 
-        Optional<Users> result = userRepository.findById(123L);
+        Optional<User> result = userRepository.findById(123L);
 
         assertTrue(result.isPresent());
         assertEquals(Long.valueOf(123L), result.get().getUserId());
@@ -57,9 +59,9 @@ public class UserRepositoryTest {
     /** Test findById() - should return empty if user not found **/
     @Test
     public void testFindByIdShouldReturnEmptyIfNotExists() {
-        when(mockEntityManager.find(Users.class, 999L)).thenReturn(null);
+        when(mockEntityManager.find(User.class, 999L)).thenReturn(null);
 
-        Optional<Users> result = userRepository.findById(999L);
+        Optional<User> result = userRepository.findById(999L);
 
         assertFalse(result.isPresent());
     }
@@ -67,9 +69,9 @@ public class UserRepositoryTest {
     /** Test findById() - should handle exceptions gracefully **/
     @Test
     public void testFindByIdShouldHandleExceptionGracefully() {
-        when(mockEntityManager.find(Users.class, 123L)).thenThrow(new RuntimeException("DB Error"));
+        when(mockEntityManager.find(User.class, 123L)).thenThrow(new RuntimeException("DB Error"));
 
-        Optional<Users> result = userRepository.findById(123L);
+        Optional<User> result = userRepository.findById(123L);
 
         assertFalse(result.isPresent());
     }
@@ -77,16 +79,16 @@ public class UserRepositoryTest {
     /** Test saveAll() - should successfully persist all users **/
     @Test
     public void testSaveAllShouldPersistAllUsersSuccessfully() {
-        Users mockUser = mock(Users.class);
-        Users mockUser1 = mock(Users.class);
-        Users mockUser2 = mock(Users.class);
-        List<Users> users = Arrays.asList(
+        User mockUser = mock(User.class);
+        User mockUser1 = mock(User.class);
+        User mockUser2 = mock(User.class);
+        List<User> users = Arrays.asList(
                 mockUser,
                 mockUser1,
                 mockUser2
         );
 
-        doNothing().when(mockEntityManager).persist(any(Users.class));
+        doNothing().when(mockEntityManager).persist(any(User.class));
 
         CompletionStage<Map<String, Object>> resultStage = userRepository.saveAll(users);
         Map<String, Object> result = resultStage.toCompletableFuture().join();
@@ -98,16 +100,16 @@ public class UserRepositoryTest {
     /** Test saveAll() - should handle failures in persistence **/
     @Test
     public void testSaveAllShouldHandlePersistenceFailures() {
-        // Create mock Users objects
-        Users user1 = mock(Users.class);
-        Users user2 = mock(Users.class);
-        Users user3 = mock(Users.class);
+        // Create mock User objects
+        User user1 = mock(User.class);
+        User user2 = mock(User.class);
+        User user3 = mock(User.class);
 
         // Define behavior for getUserId() on each mock user
         when(user2.getUserId()).thenReturn(123L);
 
         // Create a list of users
-        List<Users> users = Arrays.asList(user1, user2, user3);
+        List<User> users = Arrays.asList(user1, user2, user3);
 
         // Simulate persistence behavior
         doNothing().when(mockEntityManager).persist(user1); // Success

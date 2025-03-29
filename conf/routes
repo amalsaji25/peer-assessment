@@ -1,19 +1,33 @@
 # Routes
 # This file defines all application routes (Higher priority routes first)
-# ~~~~
 
 # Authentication Routes
 GET     /                           controllers.AuthController.login(request: play.mvc.Http.Request)
 POST    /login                      controllers.AuthController.authenticate(request: play.mvc.Http.Request)
 GET     /logout                     controllers.AuthController.logout(request: play.mvc.Http.Request)
 
-
 # Role Based Routes (Protected)
-GET     /admin/dashboard            controllers.AdminController.dashboard(request: play.mvc.Http.Request)
-GET     /student/dashboard          controllers.StudentController.dashboard(request: play.mvc.Http.Request)
-GET     /professor/dashboard        controllers.ProfessorController.dashboard(request: play.mvc.Http.Request)
+GET     /dashboard                  controllers.DashboardController.dashboard(request: play.mvc.Http.Request)
 
-POST    /admin/uploadFile   controllers.AdminController.uploadFile(request: play.mvc.Http.Request)
+GET     /api/courses                controllers.CoreServiceController.getAllCourses(request: play.mvc.Http.Request)
 
+POST    /uploadFile                 controllers.FileUploadController.uploadFile(request: play.mvc.Http.Request)
+
+POST    /api/assignments/create      controllers.FormsController.createAssignment(request: play.mvc.Http.Request)
+
+GET     /api/assignments/:assignmentId  controllers.CoreServiceController.getAssignmentDetails(assignmentId: Long, request: play.mvc.Http.Request)
+
+POST    /api/assignments/edit/:assignmentId  controllers.FormsController.updateAssignment(assignmentId: Long, request: play.mvc.Http.Request)
+
+GET    /api/reviewTasks/overview/:assignmentId  controllers.CoreServiceController.getReviewTasksSubmissionOverview(assignmentId: Long, request: play.mvc.Http.Request)
+
+GET    /api/courses/:courseCode/assignments     controllers.CoreServiceController.fetchAssignmentsForCourse(courseCode: String, request: play.mvc.Http.Request)
+
+DELETE  /api/assignments/delete/:assignmentId  controllers.CoreServiceController.deleteAssignment(assignmentId: Long, request: play.mvc.Http.Request)
+
+GET    /api/download/report/:courseCode/:assignmentId     controllers.FileExportController.downloadExcelReport(courseCode: String, assignmentId: Long, request: play.mvc.Http.Request)
+
+POST   /api/download/studentFeedback      controllers.FileExportController.downloadStudentFeedbackReport(request: Request)
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+

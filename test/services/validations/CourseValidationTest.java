@@ -1,13 +1,13 @@
 package services.validations;
 
-import models.Courses;
-import models.Users;
+import models.Course;
+import models.User;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import repository.CourseRepository;
+import repository.core.CourseRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +26,7 @@ public class CourseValidationTest {
     private CSVRecord csvRecord;
 
     @Mock
-    private Courses mockCourse;
+    private Course mockCourse;
 
     @Before
     public void setUp() {
@@ -97,7 +97,7 @@ public class CourseValidationTest {
 
     @Test
     public void testValidateSemanticsShouldReturnTrueWhenValidCourseAndProfessorExists() {
-        Users mockProfessor = mock(Users.class);
+        User mockProfessor = mock(User.class);
         when(mockCourse.getCourseCode()).thenReturn("CS103");
         when(mockCourse.getProfessor()).thenReturn(mockProfessor);
         when(courseRepository.findByCourseCode("CS103")).thenReturn(Optional.empty());

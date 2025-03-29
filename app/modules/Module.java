@@ -7,69 +7,72 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
-import com.google.inject.name.Names;
-import models.Courses;
-import models.Enrollments;
-import models.Users;
-import repository.CourseRepository;
-import repository.EnrollmentRepository;
-import repository.Repository;
-import repository.UserRepository;
-import services.AuthorizationService;
-import services.DashBoardRedirectService;
-import services.mappers.CourseEntityMapper;
-import services.mappers.EnrollmentEntityMapper;
-import services.mappers.EntityMapper;
-import services.mappers.UserEntityMapper;
+import models.Course;
+import models.Enrollment;
+import models.ReviewTask;
+import models.User;
+import repository.core.*;
+import services.core.*;
+import services.dashboard.AdminDashboard;
+import services.dashboard.Dashboard;
+import services.dashboard.ProfessorDashboard;
+import services.dashboard.StudentDashboard;
+import services.export.ExcelExportServiceImpl;
+import services.export.ExportService;
+import services.mappers.*;
 import services.processors.CSVProcessor;
 import services.processors.FileProcessor;
-import services.validations.CourseValidation;
-import services.validations.EnrollmentValidation;
-import services.validations.UserValidation;
-import services.validations.Validations;
+import services.validations.*;
 
 public class Module extends AbstractModule {
 
     @Override
     protected void configure() {
         // Bind UserRepository, CourseRepository, and EnrollmentRepository
-        bind(new TypeLiteral<Repository<Users>>() {}).to(UserRepository.class).in(Singleton.class);
-        bind(new TypeLiteral<Repository<Courses>>() {}).to(CourseRepository.class).in(Singleton.class);
-        bind(new TypeLiteral<Repository<Enrollments>>() {}).to(EnrollmentRepository.class).in(Singleton.class);
-
-        // Bind DashBoardRedirectService
-        bind(DashBoardRedirectService.class).asEagerSingleton();
+        bind(new TypeLiteral<Repository<User>>() {}).to(UserRepository.class).in(Singleton.class);
+        bind(new TypeLiteral<Repository<Course>>() {}).to(CourseRepository.class).in(Singleton.class);
+        bind(new TypeLiteral<Repository<Enrollment>>() {}).to(EnrollmentRepository.class).in(Singleton.class);
+        bind(new TypeLiteral<Repository<ReviewTask>>() {}).to(ReviewTaskRepository.class).in(Singleton.class);
 
         // Bind Authorization implementations
         bind(Authorization.class).to(RoleBasedAuthorization.class);
 
         // Bind EntityMapper implementations
-        bind(new TypeLiteral<EntityMapper<Users>>() {}).to(UserEntityMapper.class).in(Singleton.class);
-        bind(new TypeLiteral<EntityMapper<Courses>>() {}).to(CourseEntityMapper.class).in(Singleton.class);
-        bind(new TypeLiteral<EntityMapper<Enrollments>>() {}).to(EnrollmentEntityMapper.class).in(Singleton.class);
+        bind(new TypeLiteral<EntityMapper<User>>() {}).to(UserEntityMapper.class).in(Singleton.class);
+        bind(new TypeLiteral<EntityMapper<Course>>() {}).to(CourseEntityMapper.class).in(Singleton.class);
+        bind(new TypeLiteral<EntityMapper<Enrollment>>() {}).to(EnrollmentEntityMapper.class).in(Singleton.class);
+        bind(new TypeLiteral<EntityMapper<ReviewTask>>() {}).to(ReviewTaskEntityMapper.class).in(Singleton.class);
 
         // Bind Validations implementations
-        bind(new TypeLiteral<Validations<Users>>() {}).to(UserValidation.class).in(Singleton.class);
-        bind(new TypeLiteral<Validations<Courses>>() {}).to(CourseValidation.class).in(Singleton.class);
-        bind(new TypeLiteral<Validations<Enrollments>>() {}).to(EnrollmentValidation.class).in(Singleton.class);
+        bind(new TypeLiteral<Validations<User>>() {}).to(UserValidation.class).in(Singleton.class);
+        bind(new TypeLiteral<Validations<Course>>() {}).to(CourseValidation.class).in(Singleton.class);
+        bind(new TypeLiteral<Validations<Enrollment>>() {}).to(EnrollmentValidation.class).in(Singleton.class);
+        bind(new TypeLiteral<Validations<ReviewTask>>() {}).to(ReviewTaskValidation.class).in(Singleton.class);
 
-        // Bind FileProcessor implementations
-        bind(new TypeLiteral<FileProcessor>() {}).annotatedWith(Names.named("users"))
-                .to(new TypeLiteral<CSVProcessor<Users>>() {});
+        // Bind Dashboard implementations
 
-        bind(new TypeLiteral<FileProcessor>() {}).annotatedWith(Names.named("courses"))
-                .to(new TypeLiteral<CSVProcessor<Courses>>() {});
+        bind(Dashboard.class).to(StudentDashboard.class);
+        bind(StudentDashboard.class).asEagerSingleton();
+        bind(ProfessorDashboard.class).asEagerSingleton();
+        bind(AdminDashboard.class).asEagerSingleton();
 
-        bind(new TypeLiteral<FileProcessor>() {}).annotatedWith(Names.named("enrollments"))
-                .to(new TypeLiteral<CSVProcessor<Enrollments>>() {});
+        // Bind Core Service implementations
+
+        bind(UserService.class).to(UserServiceImpl.class);
+        bind(CourseService.class).to(CourseServiceImpl.class);
+        bind(EnrollmentService.class).to(EnrollmentServiceImpl.class);
+        bind(AssignmentService.class).to(AssignmentServiceImpl.class);
+        bind(ReviewTaskService.class).to(ReviewTaskServiceImpl.class);
+        bind(FeedbackService.class).to(FeedbackServiceImpl.class);
+        bind(ExportService.class).to(ExcelExportServiceImpl.class);
     }
 
     @Provides
     @Singleton
     @Named("users")
-    public CSVProcessor<Users> provideUsersCSVProcessor(
-            Validations<Users> userValidation, // Injected based on the generic type
-            EntityMapper<Users> userEntityMapper, // Injected based on the generic type
+    public FileProcessor<User> provideUsersCSVProcessor(
+            Validations<User> userValidation, // Injected based on the generic type
+            EntityMapper<User> userEntityMapper, // Injected based on the generic type
             UserRepository userRepository) {
         return new CSVProcessor<>(userValidation, userEntityMapper, userRepository);
     }
@@ -77,9 +80,9 @@ public class Module extends AbstractModule {
     @Provides
     @Singleton
     @Named("courses")
-    public CSVProcessor<Courses> provideCoursesCSVProcessor(
-            Validations<Courses> courseValidation, // Injected based on the generic type
-            EntityMapper<Courses> courseEntityMapper, // Injected based on the generic type
+    public FileProcessor<Course> provideCoursesCSVProcessor(
+            Validations<Course> courseValidation, // Injected based on the generic type
+            EntityMapper<Course> courseEntityMapper, // Injected based on the generic type
             CourseRepository courseRepository) {
         return new CSVProcessor<>(courseValidation, courseEntityMapper, courseRepository);
     }
@@ -87,10 +90,20 @@ public class Module extends AbstractModule {
     @Provides
     @Singleton
     @Named("enrollments")
-    public CSVProcessor<Enrollments> provideEnrollmentsCSVProcessor(
-            Validations<Enrollments> enrollmentValidation, // Injected based on the generic type
-            EntityMapper<Enrollments> enrollmentEntityMapper, // Injected based on the generic type
+    public FileProcessor<Enrollment> provideEnrollmentsCSVProcessor(
+            Validations<Enrollment> enrollmentValidation, // Injected based on the generic type
+            EntityMapper<Enrollment> enrollmentEntityMapper, // Injected based on the generic type
             EnrollmentRepository enrollmentRepository) {
         return new CSVProcessor<>(enrollmentValidation, enrollmentEntityMapper, enrollmentRepository);
+    }
+
+    @Provides
+    @Singleton
+    @Named("review_tasks")
+    public FileProcessor<ReviewTask> provideReviewTasksCSVProcessor(
+            Validations<ReviewTask> reviewTaskValidation, // Injected based on the generic type
+            EntityMapper<ReviewTask> reviewTaskEntityMapper, // Injected based on the generic type
+            ReviewTaskRepository reviewTaskRepository) {
+        return new CSVProcessor<>(reviewTaskValidation, reviewTaskEntityMapper, reviewTaskRepository);
     }
 }

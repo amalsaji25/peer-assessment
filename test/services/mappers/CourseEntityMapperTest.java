@@ -1,13 +1,13 @@
 package services.mappers;
 
-import models.Courses;
-import models.Users;
+import models.Course;
+import models.User;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import repository.UserRepository;
+import repository.core.UserRepository;
 
 import java.util.Optional;
 
@@ -25,7 +25,7 @@ public class CourseEntityMapperTest {
     private CSVRecord csvRecord;
 
     @Mock
-    private Users mockProfessor;
+    private User mockProfessor;
 
     @Before
     public void setUp() {
@@ -42,7 +42,7 @@ public class CourseEntityMapperTest {
 
         when(userRepository.findById(123L)).thenReturn(Optional.of(mockProfessor));
 
-        Courses course = courseEntityMapper.mapToEntity(csvRecord);
+        Course course = courseEntityMapper.mapToEntity(csvRecord);
 
         assertNotNull(course);
         assertEquals("CS101", course.getCourseCode());
@@ -59,7 +59,7 @@ public class CourseEntityMapperTest {
 
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-        Courses course = courseEntityMapper.mapToEntity(csvRecord);
+        Course course = courseEntityMapper.mapToEntity(csvRecord);
 
         assertNotNull(course);
         assertEquals("CS102", course.getCourseCode());

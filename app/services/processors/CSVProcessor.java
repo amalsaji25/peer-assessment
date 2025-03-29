@@ -1,12 +1,11 @@
 package services.processors;
 
+import exceptions.InvalidCsvException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import play.mvc.Result;
-import play.mvc.Results;
-import repository.Repository;
+import repository.core.Repository;
 import services.mappers.EntityMapper;
 import services.validations.Validations;
 
@@ -17,12 +16,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 @Singleton
-public class CSVProcessor<T> implements FileProcessor {
+public class CSVProcessor<T> implements FileProcessor<T> {
 
     private final static Logger log = LoggerFactory.getLogger(CSVProcessor.class);
     private final Validations<T> validations;
@@ -37,47 +34,65 @@ public class CSVProcessor<T> implements FileProcessor {
     }
 
     @Override
-    public CompletionStage<Result> processFile(Path filePath, String fileType) {
-        return CompletableFuture.supplyAsync(() -> {
-            try (
-                    Reader reader = Files.newBufferedReader(filePath);
-                    CSVParser csvParser = CSVParser.parse(reader,
-                            CSVFormat.Builder.create()
-                                    .setHeader()
-                                    .setSkipHeaderRecord(true)
-                                    .setIgnoreHeaderCase(true)
-                                    .setTrim(true)
-                                    .get())
-            ) {
-                // Validate CSV Header Order
-                List<String> actualHeaders = new ArrayList<>(csvParser.getHeaderNames());
-                if (!validations.validateFieldOrder(actualHeaders)) {
-                    log.warn("CSV file has incorrect field order.");
-                    return CompletableFuture.completedFuture(Results.badRequest("CSV file has incorrect field order."));
-                }
+    public CompletableFuture<List<T>> parseAndProcessFile(Path filePath) {
+    return CompletableFuture.supplyAsync(
+        () -> {
+          try (Reader reader = Files.newBufferedReader(filePath);
+              CSVParser csvParser =
+                  CSVParser.parse(
+                      reader,
+                      CSVFormat.Builder.create()
+                          .setHeader()
+                          .setSkipHeaderRecord(true)
+                          .setIgnoreHeaderCase(true)
+                          .setTrim(true)
+                          .get())) {
 
-                // Perform Syntax Validation & Map to Entities
-                List<T> syntaxValidRecords = csvParser.getRecords().stream()
-                        .filter(validations::validateSyntax)
-                        .map(entityMapper::mapToEntity)
-                        .toList();
+            // Validate CSV Header Order
+            List<String> actualHeaders = new ArrayList<>(csvParser.getHeaderNames());
+            if (!validations.validateFieldOrder(actualHeaders)) {
+              log.warn("CSV file has incorrect field order.");
+              throw new InvalidCsvException("CSV file has incorrect field order.");
+            }
 
-                log.info("Syntax validation complete. Valid records count: {}", syntaxValidRecords.size());
+            // Perform Syntax Validation & Map to Entities
+            List<T> syntaxValidRecords =
+                csvParser.getRecords().stream()
+                    .filter(validations::validateSyntax)
+                    .flatMap(record -> entityMapper.mapToEntityList(record).stream())// For records (e.g., users, courses), mapToEntityList will return a single-element list, but for record like ReviewTask, it will return a list of ReviewTask objects
+                    .toList();
 
-                // Perform Semantic Validation
-                List<T> semanticValidRecords = syntaxValidRecords.stream()
-                        .filter(record -> validations.validateSemantics(record, repository))
-                        .toList();
+            log.info(
+                "Syntax validation complete. Valid records count: {}", syntaxValidRecords.size());
 
-                log.info("Semantic validation complete. Valid records count: {}", semanticValidRecords.size());
+            // Perform Semantic Validation
+            List<T> semanticValidRecords =
+                syntaxValidRecords.stream()
+                    .filter(record -> validations.validateSemantics(record, repository))
+                    .toList();
 
-                if (semanticValidRecords.isEmpty()) {
-                    log.warn("No valid records found after semantic validation.");
-                    return CompletableFuture.completedFuture(Results.badRequest("No valid records found. Check logs for details."));
-                }
+            log.info(
+                "Semantic validation complete. Valid records count: {}",
+                semanticValidRecords.size());
 
-                // Return async save operation with `thenCompose()`
-                return repository.saveAll(semanticValidRecords).thenApply(saveStatus -> {
+            if (semanticValidRecords.isEmpty()) {
+              log.warn("No valid records found after semantic validation.");
+              throw new InvalidCsvException("No valid records found after semantic validation.");
+            }
+            return semanticValidRecords;
+          }catch (InvalidCsvException e) {
+              log.error("Invalid CSV content: {}", e.getMessage());
+              throw e;
+          } catch (Exception e) {
+              log.error("Unexpected error processing CSV file: {}", e.getMessage(), e);
+              throw new InvalidCsvException("Unexpected error while processing CSV file.", e);
+          }
+        });
+    }
+
+    @Override
+    public CompletableFuture<String> saveProcessedFileData(List<T> processedData) {
+                return (CompletableFuture<String>) repository.saveAll(processedData).thenApply(saveStatus -> {
                     int successCount = (int) saveStatus.get("successCount");
                     int failedCount = (int) saveStatus.get("failedCount");
                     List<String> failedRecords = (List<String>) saveStatus.get("failedRecords");
@@ -86,18 +101,12 @@ public class CSVProcessor<T> implements FileProcessor {
 
                     if (failedCount > 0) {
                         log.warn("Some records failed to save: {}", failedRecords);
-                        return Results.ok("Partial success: " + successCount + " records saved, " + failedCount + " failed.");
+                        return "Partial success: " + successCount + " records saved, " + failedCount + " failed.";
                     }
-                    return Results.ok("CSV uploaded and processed successfully.");
+                    return "CSV uploaded and processed successfully.";
                 }).exceptionally(ex -> {
                     log.error("Error saving records: {}", ex.getMessage(), ex);
-                    return Results.internalServerError("Failed to process CSV file.");
+                    return "Failed to process CSV file.";
                 });
-
-            } catch (Exception e) {
-                log.error("Error processing CSV file: {}", e.getMessage(), e);
-                return CompletableFuture.completedFuture(Results.internalServerError("Error processing CSV file."));
-            }
-        }).thenCompose(result -> result);
-    }
+        }
 }

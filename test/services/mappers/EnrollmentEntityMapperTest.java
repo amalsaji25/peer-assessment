@@ -1,15 +1,15 @@
 package services.mappers;
 
-import models.Courses;
-import models.Enrollments;
-import models.Users;
+import models.Course;
+import models.Enrollment;
+import models.User;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import repository.CourseRepository;
-import repository.UserRepository;
+import repository.core.CourseRepository;
+import repository.core.UserRepository;
 
 import java.util.Optional;
 
@@ -30,10 +30,10 @@ public class EnrollmentEntityMapperTest {
     private CSVRecord csvRecord;
 
     @Mock
-    private Users mockStudent;
+    private User mockStudent;
 
     @Mock
-    private Courses mockCourse;
+    private Course mockCourse;
 
     @Before
     public void setUp() {
@@ -45,12 +45,12 @@ public class EnrollmentEntityMapperTest {
     @Test
     public void testMapToEntityShouldReturnEnrollmentWhenStudentAndCourseExist() {
         when(csvRecord.get("student_id")).thenReturn(String.valueOf(123L));
-        when(csvRecord.get("course_id")).thenReturn("CS101");
+        when(csvRecord.get("course_code")).thenReturn("CS101");
 
         when(userRepository.findById(123L)).thenReturn(Optional.of(mockStudent));
         when(courseRepository.findByCourseCode("CS101")).thenReturn(Optional.of(mockCourse));
 
-        Enrollments enrollment = enrollmentEntityMapper.mapToEntity(csvRecord);
+        Enrollment enrollment = enrollmentEntityMapper.mapToEntity(csvRecord);
 
         assertNotNull(enrollment);
         assertEquals(mockStudent, enrollment.getStudent());
@@ -61,12 +61,12 @@ public class EnrollmentEntityMapperTest {
     @Test
     public void testMapToEntityShouldReturnEnrollmentWithNullStudentWhenStudentDoesNotExist() {
         when(csvRecord.get("student_id")).thenReturn(String.valueOf(999L));
-        when(csvRecord.get("course_id")).thenReturn("CS101");
+        when(csvRecord.get("course_code")).thenReturn("CS101");
 
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
         when(courseRepository.findByCourseCode("CS101")).thenReturn(Optional.of(mockCourse));
 
-        Enrollments enrollment = enrollmentEntityMapper.mapToEntity(csvRecord);
+        Enrollment enrollment = enrollmentEntityMapper.mapToEntity(csvRecord);
 
         assertNotNull(enrollment);
         assertNull(enrollment.getStudent());
@@ -77,12 +77,12 @@ public class EnrollmentEntityMapperTest {
     @Test
     public void testMapToEntityShouldReturnEnrollmentWithNullCourseWhenCourseDoesNotExist() {
         when(csvRecord.get("student_id")).thenReturn(String.valueOf(123L));
-        when(csvRecord.get("course_id")).thenReturn("CS999");
+        when(csvRecord.get("course_code")).thenReturn("CS999");
 
         when(userRepository.findById(123L)).thenReturn(Optional.of(mockStudent));
         when(courseRepository.findByCourseCode("CS999")).thenReturn(Optional.empty());
 
-        Enrollments enrollment = enrollmentEntityMapper.mapToEntity(csvRecord);
+        Enrollment enrollment = enrollmentEntityMapper.mapToEntity(csvRecord);
 
         assertNotNull(enrollment);
         assertEquals(mockStudent, enrollment.getStudent());
@@ -93,12 +93,12 @@ public class EnrollmentEntityMapperTest {
     @Test
     public void testMapToEntityShouldReturnEnrollmentWithNullStudentAndNullCourseWhenBothDoNotExist() {
         when(csvRecord.get("student_id")).thenReturn(String.valueOf(999L));
-        when(csvRecord.get("course_id")).thenReturn("CS999");
+        when(csvRecord.get("course_code")).thenReturn("CS999");
 
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
         when(courseRepository.findByCourseCode("CS999")).thenReturn(Optional.empty());
 
-        Enrollments enrollment = enrollmentEntityMapper.mapToEntity(csvRecord);
+        Enrollment enrollment = enrollmentEntityMapper.mapToEntity(csvRecord);
 
         assertNotNull(enrollment);
         assertNull(enrollment.getStudent());

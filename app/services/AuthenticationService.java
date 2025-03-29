@@ -1,21 +1,17 @@
 package services;
 
-import controllers.routes;
-import models.Users;
+import models.User;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
-import play.mvc.Results;
 import play.mvc.Security;
-import repository.UserRepository;
+import repository.core.UserRepository;
 
 import javax.inject.Inject;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.Optional;
 
 public class AuthenticationService extends Security.Authenticator {
@@ -31,8 +27,8 @@ public class AuthenticationService extends Security.Authenticator {
         this.userRepository = userRepository;
     }
 
-    public Optional<Users> authenticate(Long userId, String password){
-        Optional<Users> user = userRepository.findById(userId);
+    public Optional<User> authenticate(Long userId, String password){
+        Optional<User> user = userRepository.findById(userId);
         if(user.isPresent() && BCrypt.checkpw(password, user.get().getPassword())){
             return user; // User Authenticated
         }
@@ -41,8 +37,9 @@ public class AuthenticationService extends Security.Authenticator {
 
     @Override
     public Optional<String> getUsername(Http.Request request){
-        String sessionId = request.session().get("userId").orElse("NONE");
-        log.info("SessionId: {}", sessionId);
+        String sessionUserId = request.session().get("userId").orElse("NONE");
+        log.info("SessionId: {}", sessionUserId);
+        log.info("Session: {}", request.session().data().toString());
         Optional<String> userId = request.session().get("userId");
         Optional<String> lastActivity = request.session().get("lastActivity");
 
@@ -54,17 +51,17 @@ public class AuthenticationService extends Security.Authenticator {
         Instant now = Instant.now();
 
         if (ChronoUnit.MINUTES.between(lastActivityTime, now) > SESSION_TIMEOUT_MINUTES){
+            log.info("Session time expired");
             return Optional.empty();
         }
-
+        log.info("User session is still active");
         return userId;
     }
 
     @Override
     public Result onUnauthorized(Http.Request request) {
-        return Results.unauthorized(Json.toJson(Collections.singletonMap(
-                "error", "Session expired. Please login again."
-        ))).withHeader("redirectUrl", routes.AuthController.login().url());
+        return redirect(controllers.routes.AuthController.login().url())
+                .withNewSession();
     }
 
     public static Http.Session updateSession(Http.Request request) {

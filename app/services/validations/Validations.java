@@ -1,7 +1,7 @@
 package services.validations;
 
 import org.apache.commons.csv.CSVRecord;
-import repository.Repository;
+import repository.core.Repository;
 
 import java.util.List;
 

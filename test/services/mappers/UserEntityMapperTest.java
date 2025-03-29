@@ -1,6 +1,6 @@
 package services.mappers;
 
-import models.Users;
+import models.User;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,13 +35,12 @@ public class UserEntityMapperTest {
         when(csvRecord.get("last_name")).thenReturn("Doe");
         when(csvRecord.get("role")).thenReturn("student");
 
-        Users user = userEntityMapper.mapToEntity(csvRecord);
+        User user = userEntityMapper.mapToEntity(csvRecord);
 
         assertNotNull(user);
         assertEquals(Long.valueOf(123L), user.getUserId());
         assertEquals("user@example.com", user.getEmail());
         assertEquals("John", user.getFirstName());
-        assertEquals("M", user.getMiddleName());
         assertEquals("Doe", user.getLastName());
         assertEquals("student", user.getRole());
     }
@@ -57,12 +56,11 @@ public class UserEntityMapperTest {
         when(csvRecord.get("last_name")).thenReturn("Doe");
         when(csvRecord.get("role")).thenReturn("professor");
 
-        Users user = userEntityMapper.mapToEntity(csvRecord);
+        User user = userEntityMapper.mapToEntity(csvRecord);
 
         assertNotNull(user);
         assertEquals(Long.valueOf(123L), user.getUserId());
         assertEquals("John", user.getFirstName());
-        assertEquals("", user.getMiddleName());  // Middle name should be an empty string
         assertEquals("Doe", user.getLastName());
         assertEquals("professor", user.getRole());
     }
@@ -78,13 +76,12 @@ public class UserEntityMapperTest {
         when(csvRecord.get("last_name")).thenReturn("");
         when(csvRecord.get("role")).thenReturn("");
 
-        Users user = userEntityMapper.mapToEntity(csvRecord);
+        User user = userEntityMapper.mapToEntity(csvRecord);
 
         assertNotNull(user);
         assertEquals(Long.valueOf(0L), user.getUserId());
         assertEquals("", user.getEmail());
         assertEquals("", user.getFirstName());
-        assertEquals("", user.getMiddleName());  // Empty due to missing field
         assertEquals("", user.getLastName());
         assertEquals("", user.getRole());
     }

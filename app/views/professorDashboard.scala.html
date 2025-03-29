@@ -1,0 +1,497 @@
+@import models.dto.PeerReviewSummaryDTO
+@(request: play.mvc.Http.Request,professorName: String, professorRole: String, studentCount: Int, assignmentCount: Int, activeCourseCount: Int, assignments: List[Assignment], peerReviewAssignments: List[PeerReviewSummaryDTO])
+
+@dashboard(request,"Professor Dashboard",professorName) {
+    <!-- Sidebar -->
+    <nav id="sidebar">
+        <div class="d-flex flex-column h-100">
+            <div class="p-3 border-bottom">
+                <h5 class="text-primary">Peer Assessment</h5>
+            </div>
+
+                <!-- User Info -->
+            <div class="p-3 border-bottom">
+                <div class="d-flex align-items-center">
+                    <div class="user-avatar me-3">
+                        <span id="user-initials">
+                            NS
+                        </span>
+                    </div>
+                    <div>
+                        <h6 class="mb-0" id="user-name">@professorName</h6>
+                        <small class="text-muted" id="user-role">Professor</small>
+                    </div>
+                </div>
+            </div>
+
+                <!-- Navigation Menu -->
+            <ul class="nav flex-column p-3">
+                <li class="nav-item mb-2">
+                    <a href="#" class="nav-link active d-flex align-items-center rounded py-2 px-3">
+                        <i class="bi bi-house-door me-3"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+            </ul>
+
+                <!-- Logout Button -->
+            <div class="p-3 border-top mt-auto">
+                <form action="@routes.AuthController.logout()" method="GET">
+                    <button id="logout-btn" type="submit" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-box-arrow-right me-2"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+<!-- Professor Dashboard Content -->
+<div class="container-fluid px-4">
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle p-3 bg-primary bg-opacity-10 me-3">
+                        <i class="bi bi-people text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <h3 id="student-count" class="h2 mb-1">@studentCount</h3>
+                        <p class="text-muted mb-0">Students</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle p-3 bg-primary bg-opacity-10 me-3">
+                        <i class="bi bi-file-earmark-text text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <h3 id="assignment-count" class="h2 mb-1">@assignmentCount</h3>
+                        <p class="text-muted mb-0">Assignments</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle p-3 bg-primary bg-opacity-10 me-3">
+                        <i class="bi bi-calendar-check text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <h3 id="course-count" class="h2 mb-1">@activeCourseCount</h3>
+                        <p class="text-muted mb-0">Active Courses</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#create-assignment-modal">
+                            <i class="bi bi-plus-circle me-2"></i>Create Assignment
+                        </button>
+                        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#export-data-modal">
+                            <i class="bi bi-download me-2"></i>Export Data
+                        </button>
+                        <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delete-assignment-modal">
+                            <i class="bi bi-trash me-2"></i>Delete Assignment
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assignments and Reviews -->
+    <div class="row g-4">
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h2 class="h5 mb-0">Active Assignments</h2>
+                    <div>
+                        <select id="course-filter" class="form-select form-select-sm">
+                            <option value="all">All Courses</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div class="assignment-list">
+                        @if(assignments.isEmpty) {
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-0">No active assignments</p>
+                        </div>
+                        } else {
+                        @for(assignment <- assignments) {
+                        <div class="card mb-3 border">
+                            <div class="card-body p-3">
+                                <h3 class="h6 mb-2">@assignment.getTitle</h3>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <span class="badge bg-secondary me-2">@assignment.getCourse.getCourseCode</span>
+                                        <small class="text-muted">@assignment.getDueDate</small>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-secondary edit-assignment-btn" data-assignment-id=@assignment.getAssignmentId>Edit</button>
+                                    <button class="btn btn-sm btn-outline-secondary view-submissions-btn" data-assignment-id=@assignment.getAssignmentId>View Submissions</button>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0">Peer Review Assignment Progress</h2>
+                </div>
+                <div class="card-body p-3">
+                    <div class="peer-assignment-list">
+                        @if(peerReviewAssignments.isEmpty) {
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-0">No active assignments</p>
+                        </div>
+                        } else {
+                        @for(peerReview <- peerReviewAssignments) {
+                        <div class="card mb-3 border">
+                            <div class="card-body p-3">
+                                <div>
+                                    <h3 class="h6 mb-1">@peerReview.getAssignmentTitle</h3>
+                                    <p class="small text-muted mb-2">@peerReview.getCourseCode • @peerReview.getTotalStudentCount students</p>
+                                    <div class="mb-2">
+                                        <div class="progress mb-1" style="height: 0.5rem;">
+                                            <div class="progress-bar bg-primary" style="width: @peerReview.getProgressPercentage%"></div>
+                                        </div>
+                                        <small class="text-muted">@peerReview.getProgressPercentage% Complete</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Create Assignment Modal -->
+<div class="modal fade" id="create-assignment-modal" tabindex="-1" aria-labelledby="createAssignmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createAssignmentModalLabel">Create New Assignment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="create-assignment-form" enctype="multipart/form-data">
+                    @helper.CSRF.formField(request.asScala())
+                    <div class="mb-3">
+                        <label for="assignment-title" class="form-label">Assignment Title</label>
+                        <input type="text" class="form-control" id="assignment-title" name="title" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="course-select" class="form-label">Course</label>
+                            <select class="form-select" id="course-select" name="courseCode" required>
+                                <option value="">Select Course</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="start-date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start-date" name="startDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="due-date" class="form-label">Due Date</label>
+                            <input type="date" class="form-control" id="due-date" name="dueDate" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="assignment-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="assignment-description" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Review Questions</label>
+                        <div id="review-questions">
+                            <div class="review-question d-flex align-items-center mb-2">
+                                <input type="text" class="form-control" name="reviewQuestions[]" placeholder="Enter a review question" required>
+                                <button type="button" class="btn btn-sm btn-outline-danger ms-2 rounded-circle remove-question">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <label class="form-label me-2 mb-0 small">Assigned Marks:</label>
+                                <input type="number" class="form-control form-control-sm" name="questionMarks[]" min="0" max="100" value="0" style="width: 80px;">
+                                <small class="text-muted ms-2">(0-100)</small>
+                            </div>
+                        </div>
+                        <button type="button" id="add-question-btn" class="btn btn-sm btn-outline-secondary mt-2">
+                            <i class="bi bi-plus"></i> Add Question
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <label for="group-info-file" class="form-label">Upload Group Info</label>
+                        <input type="file" class="form-control" id="group-info-file" name="file" accept=".csv,.xls,.xlsx" required>
+                        <div class="form-text">Upload a CSV or Excel file containing student group information.</div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Assignment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Data Modal -->
+<div class="modal fade" id="export-data-modal" tabindex="-1" aria-labelledby="exportDataModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportDataModalLabel">Export Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="export-data-form">
+                    @helper.CSRF.formField(request.asScala())
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="export-course-select" class="form-label">Course</label>
+                            <select class="form-select" id="export-course-select" name="courseCode" required>
+                                <option value="">Select Course</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="export-assignment-select" class="form-label">Assignment</label>
+                            <select class="form-select" id="export-assignment-select" name="assignmentId" disabled required>
+                                <option value="">Select Assignment</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="export-download-btn" class="btn btn-primary" disabled>Download</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Assignment Modal -->
+<div class="modal fade" id="delete-assignment-modal" tabindex="-1" aria-labelledby="deleteAssignmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAssignmentModalLabel">Delete Assignment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="delete-assignment-form">
+                    @helper.CSRF.formField(request.asScala())
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="delete-course-select" class="form-label">Course</label>
+                            <select class="form-select" id="delete-course-select" name="courseCode" required>
+                                <option value="">Select Course</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="delete-assignment-select" class="form-label">Assignment</label>
+                            <select class="form-select" id="delete-assignment-select" name="assignmentId" disabled required>
+                                <option value="">Select Assignment</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="delete-confirm-btn" class="btn btn-danger" disabled>Delete Assignment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Assignment Modal -->
+<div class="modal fade" id="edit-assignment-modal" tabindex="-1" aria-labelledby="editAssignmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAssignmentModalLabel">Edit Assignment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-assignment-form" enctype="multipart/form-data">
+                    @helper.CSRF.formField(request.asScala())
+                    <input type="hidden" id="edit-assignment-id" name="assignmentId">
+                    <div class="mb-3">
+                        <label for="edit-assignment-title" class="form-label">Assignment Title</label>
+                        <input type="text" class="form-control" id="edit-assignment-title" name="title" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit-course-select" class="form-label">Course</label>
+                            <select class="form-select" id="edit-course-select" name="courseCode" required>
+                                <option value="">Select Course</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit-start-date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="edit-start-date" name="startDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit-due-date" class="form-label">Due Date</label>
+                            <input type="date" class="form-control" id="edit-due-date" name="dueDate" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-assignment-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="edit-assignment-description" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Review Questions</label>
+                        <div id="edit-review-questions">
+                                <!-- Review questions will be added here dynamically -->
+                        </div>
+                        <button type="button" id="edit-add-question-btn" class="btn btn-sm btn-outline-secondary mt-2">
+                            <i class="bi bi-plus"></i> Add Question
+                        </button>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Assignment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Submissions Modal -->
+<div class="modal fade" id="view-submissions-modal" tabindex="-1" aria-labelledby="viewSubmissionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewSubmissionsModalLabel">Assignment Submissions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="submissions-overview">
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-1">Total Submissions</h6>
+                                    <h3 id="total-submissions-count">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-1">Reviews Completed</h6>
+                                    <h3 id="reviews-completed-percent">0%</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-1">Groups</h6>
+                                    <h3 id="groups-count">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0">Groups</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Group Name</th>
+                                            <th>Members</th>
+                                            <th>Reviews Completed</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="groups-table-body">
+                                            <!-- Groups will be added here dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="group-details" style="display: none;">
+                    <div class="d-flex align-items-center mb-4">
+                        <button id="back-to-groups-btn" class="btn btn-sm btn-outline-secondary me-3">
+                            <i class="bi bi-arrow-left"></i> Back to Groups
+                        </button>
+                        <h5 id="group-name" class="mb-0">Group Name</h5>
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0">Group Members</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Student Name</th>
+                                            <th>Email</th>
+                                            <th>Average Score</th>
+                                            <th>Submission</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="members-table-body">
+                                            <!-- Members will be added here dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <script src="@routes.Assets.versioned("javascripts/professorDashboard.js")"></script>
+}

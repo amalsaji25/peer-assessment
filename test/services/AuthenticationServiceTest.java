@@ -11,6 +11,7 @@ import play.mvc.Result;
 import java.time.Instant;
 import java.util.Optional;
 
+import static org.apache.pekko.http.javadsl.model.StatusCodes.SEE_OTHER;
 import static org.junit.Assert.*;
 import static play.mvc.Http.Status.UNAUTHORIZED;
 import static play.mvc.Http.RequestBuilder;
@@ -75,6 +76,7 @@ public class AuthenticationServiceTest {
     @Test
     public void testOnUnauthorizedShouldReturnUnauthorizedResponse() {
         Result result = authenticationService.onUnauthorized(request);
-        assertEquals(UNAUTHORIZED, result.status());
+        assertEquals(303, result.status());
+        assertEquals("/", result.redirectLocation().orElse(""));
     }
 }

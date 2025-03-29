@@ -1,0 +1,221 @@
+@(request: play.mvc.Http.Request,adminName: String, adminRole: String)
+
+@dashboard(request,"Admin Dashboard",adminName) {
+
+    <!-- Sidebar -->
+    <nav id="sidebar">
+        <div class="d-flex flex-column h-100">
+            <div class="p-3 border-bottom">
+                <h5 class="text-primary">Peer Assessment</h5>
+            </div>
+
+                <!-- User Info -->
+            <div class="p-3 border-bottom">
+                <div class="d-flex align-items-center">
+                    <div class="user-avatar me-3">
+                        <span id="user-initials">
+                            NS
+                        </span>
+                    </div>
+                    <div>
+                        <h6 class="mb-0" id="user-name">Name</h6>
+                        <small class="text-muted" id="user-role">Admin</small>
+                    </div>
+                </div>
+            </div>
+
+                <!-- Navigation Menu -->
+            <ul class="nav flex-column p-3">
+                <li class="nav-item mb-2">
+                    <a href="#" class="nav-link active d-flex align-items-center rounded py-2 px-3">
+                        <i class="bi bi-house-door me-3"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+            </ul>
+
+                <!-- Logout Button -->
+            <div class="p-3 border-top mt-auto">
+                <form action="@routes.AuthController.logout()" method="GET">
+                    <button id="logout-btn" type="submit" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-box-arrow-right me-2"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+<div class="container-fluid px-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="h4 mb-2">Welcome, @adminName</h2>
+                    <p class="text-muted mb-0">Use the tools below to manage system data</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Upload Cards -->
+    <div class="row g-4">
+        <!-- User File Upload -->
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0">User Management</h2>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-3">
+                        <div class="rounded-circle p-3 bg-primary bg-opacity-10 d-inline-flex mb-3">
+                            <i class="bi bi-people-fill text-primary fs-1"></i>
+                        </div>
+                        <h3 class="h6">Upload User Data</h3>
+                        <p class="text-muted small mb-3">Import users from CSV or Excel file</p>
+                    </div>
+
+                    <form class="uploadForm" action="@routes.FileUploadController.uploadFile().url"  enctype="multipart/form-data">
+                        @helper.CSRF.formField(request.asScala())
+                        <div class="mb-3">
+                            <label for="userFile" class="form-label">Select File</label>
+                            <input class="form-control" type="file" id="userFile" name="file" accept=".csv,.xlsx,.xls">
+                            <div class="form-text">Supported formats: CSV, Excel</div>
+                        </div>
+                        <input type="hidden" name="fileType" value="users">
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload me-2"></i>Upload Users
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course File Upload -->
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0">Course Management</h2>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-3">
+                        <div class="rounded-circle p-3 bg-primary bg-opacity-10 d-inline-flex mb-3">
+                            <i class="bi bi-book-fill text-primary fs-1"></i>
+                        </div>
+                        <h3 class="h6">Upload Course Data</h3>
+                        <p class="text-muted small mb-3">Import courses from CSV or Excel file</p>
+                    </div>
+
+                    <form class="uploadForm" action="@routes.FileUploadController.uploadFile().url"  enctype="multipart/form-data">
+                        @helper.CSRF.formField(request.asScala())
+                        <div class="mb-3">
+                            <label for="courseFile" class="form-label">Select File</label>
+                            <input class="form-control" type="file" id="courseFile" name="file" accept=".csv,.xlsx,.xls">
+                            <div class="form-text">Supported formats: CSV, Excel</div>
+                        </div>
+                        <input type="hidden" name="fileType" value="courses">
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload me-2"></i>Upload Courses
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enrollment File Upload -->
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0">Enrollment Management</h2>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-3">
+                        <div class="rounded-circle p-3 bg-primary bg-opacity-10 d-inline-flex mb-3">
+                            <i class="bi bi-person-plus-fill text-primary fs-1"></i>
+                        </div>
+                        <h3 class="h6">Upload Enrollment Data</h3>
+                        <p class="text-muted small mb-3">Import enrollments from CSV or Excel file</p>
+                    </div>
+
+                    <form class="uploadForm" action="@routes.FileUploadController.uploadFile().url"  enctype="multipart/form-data">
+                        @helper.CSRF.formField(request.asScala())
+                        <div class="mb-3">
+                            <label for="enrollmentFile" class="form-label">Select File</label>
+                            <input class="form-control" type="file" id="enrollmentFile" name="file" accept=".csv,.xlsx,.xls">
+                            <div class="form-text">Supported formats: CSV, Excel</div>
+                        </div>
+                        <input type="hidden" name="fileType" value="enrollments">
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload me-2"></i>Upload Enrollments
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Uploads -->
+@*    <div class="row mt-4 mb-4">*@
+@*        <div class="col-12">*@
+@*            <div class="card border-0 shadow-sm">*@
+@*                <div class="card-header bg-white py-3">*@
+@*                    <h2 class="h5 mb-0">Recent Uploads</h2>*@
+@*                </div>*@
+@*                <div class="card-body p-3">*@
+@*                    <div class="table-responsive">*@
+@*                        <table class="table table-hover">*@
+@*                            <thead>*@
+@*                            <tr>*@
+@*                                <th>File Name</th>*@
+@*                                <th>Type</th>*@
+@*                                <th>Date</th>*@
+@*                                <th>Status</th>*@
+@*                                <th>Actions</th>*@
+@*                            </tr>*@
+@*                            </thead>*@
+@*                            <tbody>*@
+@*                            <tr>*@
+@*                                <td>users_spring2025.csv</td>*@
+@*                                <td>Users</td>*@
+@*                                <td>May 10, 2025</td>*@
+@*                                <td><span class="badge bg-success">Completed</span></td>*@
+@*                                <td>*@
+@*                                    <button class="btn btn-sm btn-outline-secondary">View Log</button>*@
+@*                                </td>*@
+@*                            </tr>*@
+@*                            <tr>*@
+@*                                <td>courses_spring2025.xlsx</td>*@
+@*                                <td>Courses</td>*@
+@*                                <td>May 9, 2025</td>*@
+@*                                <td><span class="badge bg-success">Completed</span></td>*@
+@*                                <td>*@
+@*                                    <button class="btn btn-sm btn-outline-secondary">View Log</button>*@
+@*                                </td>*@
+@*                            </tr>*@
+@*                            <tr>*@
+@*                                <td>enrollments_cs101.csv</td>*@
+@*                                <td>Enrollments</td>*@
+@*                                <td>May 8, 2025</td>*@
+@*                                <td><span class="badge bg-warning text-dark">Partial</span></td>*@
+@*                                <td>*@
+@*                                    <button class="btn btn-sm btn-outline-secondary">View Log</button>*@
+@*                                </td>*@
+@*                            </tr>*@
+@*                            </tbody>*@
+@*                        </table>*@
+@*                    </div>*@
+@*                </div>*@
+@*            </div>*@
+@*        </div>*@
+@*    </div>*@
+</div>
+
+    <script src="@routes.Assets.versioned("javascripts/fileUpload.js")" defer></script>
+}

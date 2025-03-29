@@ -1,12 +1,12 @@
 package services.validations;
 
-import models.Users;
+import models.User;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import repository.UserRepository;
+import repository.core.UserRepository;
 
 import java.util.*;
 
@@ -24,7 +24,7 @@ public class UserValidationTest {
     private CSVRecord csvRecord;
 
     @Mock
-    private Users mockUser;
+    private User mockUser;
 
     @Before
     public void setUp() {
@@ -90,14 +90,14 @@ public class UserValidationTest {
     /** Test Field Order Validation **/
     @Test
     public void testValidateFieldOrderShouldReturnTrueWhenOrderIsCorrect() {
-        List<String> correctHeaders = Arrays.asList("user_id", "email", "password", "first_name", "middle_name", "last_name", "role");
+        List<String> correctHeaders = Arrays.asList("user_id", "email", "password", "first_name", "last_name", "role");
 
         assertTrue(userValidation.validateFieldOrder(correctHeaders));
     }
 
     @Test
     public void testValidateFieldOrderShouldReturnFalseWhenOrderIsIncorrect() {
-        List<String> incorrectHeaders = Arrays.asList("email", "user_id", "password", "first_name", "middle_name", "last_name", "role");
+        List<String> incorrectHeaders = Arrays.asList("email", "user_id", "password", "first_name", "last_name", "role");
 
         assertFalse(userValidation.validateFieldOrder(incorrectHeaders));
     }

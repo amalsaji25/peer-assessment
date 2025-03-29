@@ -1,6 +1,6 @@
 package repository;
 
-import models.Courses;
+import models.Course;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,6 +9,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import play.db.jpa.JPAApi;
 
 import jakarta.persistence.EntityManager;
+import repository.core.CourseRepository;
+
 import java.util.*;
 
 import java.util.concurrent.CompletionStage;
@@ -44,11 +46,11 @@ public class CourseRepositoryTest {
     /** Test that findByCourseCode returns course when found **/
     @Test
     public void testFindByCourseCodeShouldReturnCourseIfExists() {
-        Courses expectedCourse = new Courses("CS101", "Computer Science", null);
+        Course expectedCourse = new Course("CS101", "Computer Science", null);
 
-        when(mockEntityManager.find(Courses.class, "CS101")).thenReturn(expectedCourse);
+        when(mockEntityManager.find(Course.class, "CS101")).thenReturn(expectedCourse);
 
-        Optional<Courses> result = courseRepository.findByCourseCode("CS101");
+        Optional<Course> result = courseRepository.findByCourseCode("CS101");
 
         assertTrue(result.isPresent());
         assertEquals("CS101", result.get().getCourseCode());
@@ -57,9 +59,9 @@ public class CourseRepositoryTest {
     /** Test that findByCourseCode returns empty if course does not exist **/
     @Test
     public void testFindByCourseCodeShouldReturnEmptyIfNotExists() {
-        when(mockEntityManager.find(Courses.class, "CS999")).thenReturn(null);
+        when(mockEntityManager.find(Course.class, "CS999")).thenReturn(null);
 
-        Optional<Courses> result = courseRepository.findByCourseCode("CS999");
+        Optional<Course> result = courseRepository.findByCourseCode("CS999");
 
         assertFalse(result.isPresent());
     }
@@ -67,15 +69,15 @@ public class CourseRepositoryTest {
     /** Test that saveAll correctly batches and reports success/failures **/
     @Test
     public void testSaveAllShouldReturnCorrectSuccessAndFailureCounts() {
-        List<Courses> courses = Arrays.asList(
-                new Courses("CS101", "Computer Science", null),
-                new Courses("CS102", "Data Structures", null),
-                new Courses("CS103", "Algorithms", null)
+        List<Course> cours = Arrays.asList(
+                new Course("CS101", "Computer Science", null),
+                new Course("CS102", "Data Structures", null),
+                new Course("CS103", "Algorithms", null)
         );
 
-        doNothing().when(mockEntityManager).persist(any(Courses.class));
+        doNothing().when(mockEntityManager).persist(any(Course.class));
 
-        CompletionStage<Map<String, Object>> resultStage = courseRepository.saveAll(courses);
+        CompletionStage<Map<String, Object>> resultStage = courseRepository.saveAll(cours);
         Map<String, Object> result = resultStage.toCompletableFuture().join();
 
         assertEquals(3, result.get("successCount"));

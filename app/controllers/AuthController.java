@@ -1,7 +1,7 @@
 package controllers;
 
 import forms.LoginForm;
-import models.Users;
+import models.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import play.data.Form;
@@ -12,15 +12,11 @@ import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
 import services.AuthenticationService;
-import services.DashBoardRedirectService;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
-
 import static play.mvc.Results.*;
 
 @Singleton
@@ -28,30 +24,24 @@ public class AuthController {
 
     private final FormFactory formFactory;
     private final AuthenticationService authenticationService;
-    private final DashBoardRedirectService dashBoardRedirectService;
-    private static Logger log = LoggerFactory.getLogger(AuthController.class);
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final CSRF.TokenProvider csrfTokenProvider;
     private final CSRFConfig csrfConfig;
 
     @Inject
-    public AuthController(FormFactory formFactory, AuthenticationService authenticationService, DashBoardRedirectService dashBoardRedirectService, CSRF.TokenProvider csrfTokenProvider, CSRFConfig csrfConfig) {
+    public AuthController(FormFactory formFactory, AuthenticationService authenticationService, CSRF.TokenProvider csrfTokenProvider, CSRFConfig csrfConfig) {
         this.formFactory = formFactory;
         this.authenticationService = authenticationService;
-        this.dashBoardRedirectService = dashBoardRedirectService;
         this.csrfTokenProvider = csrfTokenProvider;
         this.csrfConfig = csrfConfig;
     }
 
-    public Result login(Http.Request request){
-        return ok(views.html.index.render(request));
-    }
-
-    public Result authenticate(Http.Request request) {
-
+    public Result login(Http.Request request)
+    {
         String csrfCookieName = csrfConfig.cookieName().isDefined() ? csrfConfig.cookieName().get() : "No Cookie Configured";
 
-        log.info("🔍 CSRF Token Key (Header): {}", csrfConfig.headerName());
-        log.info("🔍 CSRF Token Key (Cookie): {}", csrfCookieName);
+        log.info("CSRF Token Key (Header): {}", csrfConfig.headerName());
+        log.info("CSRF Token Key (Cookie): {}", csrfCookieName);
 
         // Check if it's an already existing session
         Optional<String> existingUserId = request.session().get("userId");
@@ -62,17 +52,19 @@ public class AuthController {
         if (existingUserId.isPresent()) {
             log.info("Session already exists for userId: {}", existingUserId.get());
 
+            String dashboardUrl = routes.DashboardController.dashboard().url();
+
             Optional<CSRF.Token> csrfTokenOpt = CSRF.getToken(request);
 
             if(csrfTokenOpt.isEmpty()){
                 log.warn("CSRF Token is empty! Not setting csrfToken cookie.");
             }
-
-            Result result = ok(Json.toJson(Collections.singletonMap("message", "User already authenticated.")));
+            log.info("User already authenticated. Redirecting to dashboard: {}", dashboardUrl);
+            Result result = ok(Json.toJson(Collections.singletonMap("redirectUrl", dashboardUrl)));
 
             if (csrfTokenOpt.isPresent()) {
                 log.info("Setting CSRF Token Cookie: {}", csrfTokenOpt.get().value());
-                result = result.withCookies(Http.Cookie.builder("csrfToken", csrfTokenOpt.get().value())
+                 result.withCookies(Http.Cookie.builder("csrfToken", csrfTokenOpt.get().value())
                         .withHttpOnly(false)
                         .withSecure(false)
                         .withSameSite(Http.Cookie.SameSite.LAX)
@@ -81,8 +73,13 @@ public class AuthController {
                 log.warn("CSRF Token is missing! Not setting csrfToken cookie.");
             }
 
-            return result;
+            return redirect(dashboardUrl).withSession(request.session());
+    } else {
+            return ok(views.html.index.render(request));
         }
+    }
+
+    public Result authenticate(Http.Request request) {
 
         // Login if session is not found for user
         Form<LoginForm> loginForm = formFactory.form(LoginForm.class).bindFromRequest(request);
@@ -93,7 +90,7 @@ public class AuthController {
         }
 
         LoginForm loginData = loginForm.get();
-        Optional<Users> user = authenticationService.authenticate(loginData.getUserId(), loginData.getPassword());
+        Optional<User> user = authenticationService.authenticate(loginData.getUserId(), loginData.getPassword());
 
         if (user.isEmpty()) {
             log.error("Invalid credentials. Please try again.");
@@ -101,7 +98,7 @@ public class AuthController {
         }
 
         String role = user.get().getRole();
-        String dashboardUrl = dashBoardRedirectService.getDashboardUrl(role);
+        String dashboardUrl = routes.DashboardController.dashboard().url();
 
         // Generate CSRF token after authentication
         String csrfToken = csrfTokenProvider.generateToken();
@@ -110,6 +107,7 @@ public class AuthController {
 
         return ok(Json.toJson(Collections.singletonMap("redirectUrl", dashboardUrl)))
                 .addingToSession(request, "userId", String.valueOf(user.get().getUserId()))
+                .addingToSession(request, "userName",user.get().getUserName() )
                 .addingToSession(request, "role", role)
                 .addingToSession(request, "lastActivity", String.valueOf(Instant.now().toEpochMilli()))
                 .withHeader("Csrf-Token", csrfToken)
@@ -121,6 +119,8 @@ public class AuthController {
     }
 
     public Result logout(Http.Request request){
+        log.info("Logging out.");
+        log.info("User Id: {}", request.session().get("userId").orElse("NONE"));
         return redirect(routes.AuthController.login()).withNewSession();
     }
 

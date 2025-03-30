@@ -1,6 +1,7 @@
 package models;
 
 import jakarta.persistence.*;
+import models.enums.Status;
 import repository.core.CourseRepository;
 
 import java.io.Serializable;
@@ -16,7 +17,7 @@ public class Assignment implements Serializable {
     private Long assignmentId;
 
     @ManyToOne
-    @JoinColumn(name = "course_code", referencedColumnName = "course_code", nullable = false)
+    @JoinColumn(name = "course_code", referencedColumnName = "course_id", nullable = false)
     private Course course;
 
     @Column(name = "title", nullable = false)
@@ -37,10 +38,19 @@ public class Assignment implements Serializable {
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FeedbackQuestion> feedbackQuestions;
 
-    public Assignment() {}
+  @Column(name = "status", nullable = false)
+  private Status status = Status.PENDING;
 
-    public Assignment(String courseCode, String title, String description, LocalDate startDate, LocalDate dueDate, CourseRepository courseRepository) {
-        this.course = courseRepository.findByCourseCode(courseCode).orElseThrow(() -> new IllegalArgumentException("Course not found with code " + courseCode));
+    @Transient
+    private String statusReason;
+
+    @Transient
+    private String term;
+
+  public Assignment() {}
+
+    public Assignment(String courseCode, String title, String description, LocalDate startDate, LocalDate dueDate, CourseRepository courseRepository, String term, String courseSection) {
+        this.course = courseRepository.findByCourseCodeAndSectionAndTerm(courseCode, courseSection, term).orElseThrow(() -> new IllegalArgumentException("Course not found with code " + courseCode));
         this.title = title;
         this.description = description;
         this.startDate = startDate;
@@ -105,5 +115,21 @@ public class Assignment implements Serializable {
 
     public void setFeedbackQuestions(List<FeedbackQuestion> feedbackQuestions) {
         this.feedbackQuestions = feedbackQuestions;
+    }
+
+    public String getStatus() {
+        return status.toString().toLowerCase();
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public String getStatusReason() {
+        return statusReason;
+    }
+
+    public void setStatusReason(String statusReason) {
+        this.statusReason = statusReason;
     }
 }

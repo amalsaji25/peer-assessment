@@ -1,13 +1,12 @@
 package services.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import models.Feedback;
 import models.ReviewTask;
 import models.User;
-import models.dto.FeedbackDTO;
-import models.dto.MemberSubmissionDTO;
-import models.dto.GroupSubmissionDTO;
-import models.dto.SubmissionOverviewDTO;
-import models.enums.ReviewStatus;
+import models.dto.*;
+import models.enums.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import repository.core.ReviewTaskRepository;
@@ -15,6 +14,7 @@ import repository.core.ReviewTaskRepository;
 import javax.inject.Inject;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,13 +39,16 @@ public class ReviewTaskServiceImpl implements ReviewTaskService {
                 return null;
             }
 
-            int completed = countCompletedTasks(reviewTasks);
             Map<Long, List<ReviewTask>> groupedTasks = groupReviewTasksByGroup(reviewTasks);
             List<GroupSubmissionDTO> groupDTOs = generateSubmissionInfoInEachGroupDTOs(groupedTasks);
 
+            int totalMembers = groupDTOs.stream().mapToInt(GroupSubmissionDTO::getTotalReviewTasks).sum();
+            int completedMembers = groupDTOs.stream().mapToInt(GroupSubmissionDTO::getReviewsCompleted).sum();
+            int percentageCompleted = (totalMembers == 0) ? 0 : (int) Math.round((completedMembers * 100.0) / totalMembers);
+
             SubmissionOverviewDTO dto = new SubmissionOverviewDTO();
             dto.setTotalSubmissions(reviewTasks.size());
-            dto.setReviewsCompleted(completed);
+            dto.setReviewsCompleted(percentageCompleted);
             dto.setGroups(groupDTOs);
 
             return dto;
@@ -58,11 +61,42 @@ public class ReviewTaskServiceImpl implements ReviewTaskService {
         return CompletableFuture.completedFuture(reviewTasks.orElse(Collections.emptyList()));
     }
 
-    private int countCompletedTasks(List<ReviewTask> reviewTasks) {
-        return (int) reviewTasks.stream()
-                .filter(task -> task.getStatus().equals(ReviewStatus.COMPLETED))
-                .count();
+    @Override
+    public CompletableFuture<Integer> getReviewCountByStatus(Long userId, String courseCode, Status status) {
+        if (courseCode == null || courseCode.trim().isEmpty() || courseCode.equalsIgnoreCase("All")) {
+            return reviewTaskRepository.findReviewCountByStudentIdAndStatus(userId, status);
+        } else {
+            return reviewTaskRepository.findReviewCountByStudentIdAndStatusForCourse(userId, courseCode, status);
+        }
     }
+
+    @Override
+    public CompletableFuture<String> parseAndSaveOrSubmitReviewTask(Long reviewTaskId, JsonNode json) {
+        return CompletableFuture.supplyAsync(() -> {
+            try{
+            Status status = Status.valueOf(json.get("status").asText().toUpperCase());
+            ArrayNode feedbacks = (ArrayNode) json.get("feedbacks");
+
+            List<FeedbackDTO> feedbackDTOs = new ArrayList<>();
+            for (JsonNode feedback : feedbacks) {
+                Long feedbackId = feedback.get("feedbackId").asLong();
+                String feedbackText = feedback.has("feedback") ? feedback.get("feedback").asText() : "";
+                int score = feedback.get("marks").asInt();
+                feedbackDTOs.add(new FeedbackDTO(feedbackId, feedbackText, score));
+            }
+
+            ReviewTaskDTO reviewTaskDTO = new ReviewTaskDTO(reviewTaskId, status, feedbackDTOs);
+
+            reviewTaskRepository.saveReviewTaskFeedback(reviewTaskDTO);
+
+            return  "Review " + status.name().toLowerCase() + " successfully";
+            }catch (Exception e){
+                log.error("Error parsing and saving review task: {}", e.getMessage());
+                throw new CompletionException("Failed to parse and save review task" + e.getMessage(), e);
+            }
+        });
+    }
+
 
 
     public Map<Long, List<ReviewTask>> groupReviewTasksByGroup(List<ReviewTask> reviewTasks) {
@@ -76,11 +110,18 @@ public class ReviewTaskServiceImpl implements ReviewTaskService {
             GroupSubmissionDTO groupSubmissionDTO = new GroupSubmissionDTO();
             groupSubmissionDTO.setGroupId(groupId);
             groupSubmissionDTO.setGroupName(groupReviewTasks.get(0).getGroupName());
-            groupSubmissionDTO.setGroupSize(groupReviewTasks.size());
-            groupSubmissionDTO.setReviewsCompleted(countCompletedTasks(groupReviewTasks));
-            groupSubmissionDTO.setTotalReviewTasks(groupReviewTasks.size());
 
-            groupSubmissionDTO.setMembers(generateMemberSubmissionDTOs(groupReviewTasks));
+            List<MemberSubmissionDTO> members = generateMemberSubmissionDTOs(groupReviewTasks);
+
+            long completedMembers = members.stream()
+                    .filter(m -> "COMPLETED".equalsIgnoreCase(m.getStatus()))
+                    .count();
+
+            groupSubmissionDTO.setGroupSize(members.size()); // Total team members
+            groupSubmissionDTO.setReviewsCompleted((int) completedMembers); // Members who completed all reviews
+            groupSubmissionDTO.setTotalReviewTasks(members.size());
+            groupSubmissionDTO.setMembers(members);
+
             groupSubmissionDTOList.add(groupSubmissionDTO);
         });
 
@@ -116,13 +157,13 @@ public class ReviewTaskServiceImpl implements ReviewTaskService {
 
             dto.setFeedbacks(feedbacks);
 
-            int totalScore = feedbacks.stream().mapToInt(FeedbackDTO::getScore).sum();
+            int totalScore = feedbacks.stream().mapToInt(FeedbackDTO::getMaxScore).sum();
             float average = feedbacks.isEmpty() ? 0 : (float) totalScore / feedbacks.size();
             dto.setAverageFeedbackScore(average);
 
             boolean allSubmitted = groupReviewTasks.stream()
                     .noneMatch(task -> task.getReviewer().getUserId().equals(groupMember.getUserId())
-                            && task.getStatus().equals(ReviewStatus.PENDING));
+                            && task.getStatus().equals(Status.PENDING));
             dto.setStatus(allSubmitted ? "COMPLETED" : "PENDING");
 
             memberSubmissionDTOS.add(dto);

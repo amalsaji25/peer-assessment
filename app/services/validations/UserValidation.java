@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import repository.core.Repository;
 import repository.core.UserRepository;
+import services.processors.record.InputRecord;
 
 import javax.inject.Singleton;
 import java.util.List;
@@ -15,19 +16,22 @@ import java.util.regex.Pattern;
 public class UserValidation implements Validations<User>{
 
     private static final Logger log = LoggerFactory.getLogger(UserValidation.class);
-    private static final List<String> mandatoryFields = List.of("user_id", "email", "password", "first_name", "last_name","role");
-    private static final List<String> expectedFieldsOrder = List.of("user_id", "email", "password", "first_name", "last_name", "role");
+    private static final List<String> mandatoryFields = List.of("user_id", "email", "first_name", "last_name","role");
+    private static final List<String> expectedFieldsOrder = List.of("user_id", "email", "first_name", "last_name", "role");
     private static final List<String> ALLOWED_ROLES = List.of("student", "professor");
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
 
     @Override
-    public boolean validateSyntax(CSVRecord record) {
-        boolean isValidSyntax = mandatoryFields.stream().allMatch(field -> record.isMapped(field) && !record.get(field).isEmpty());
+    public boolean validateSyntax(InputRecord record) {
+        List<String> missingFields = mandatoryFields.stream()
+                .filter(field -> !record.isMapped(field) || record.get(field).isEmpty())
+                .toList();
 
-        if(!isValidSyntax) {
-            log.warn("Skipping invalid user record due to missing mandatory fields :{}", record);
+        if (!missingFields.isEmpty()) {
+            log.warn("Skipping invalid user record due to missing or empty fields: {} | Record: {}", missingFields, record);
+            return false;
         }
-        return isValidSyntax;
+        return true;
     }
 
     @Override

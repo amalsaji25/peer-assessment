@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import repository.core.Repository;
+import services.processors.record.InputRecord;
 
 import java.util.*;
 
@@ -24,7 +25,7 @@ public class EnrollmentValidationTest {
     private Repository<Enrollment> repository;
 
     @Mock
-    private CSVRecord csvRecord;
+    private InputRecord csvRecord;
 
     @Mock
     private Enrollment mockEnrollment;
@@ -83,14 +84,14 @@ public class EnrollmentValidationTest {
     /** Test Field Order Validation **/
     @Test
     public void testValidateFieldOrderShouldReturnTrueWhenOrderIsCorrect() {
-        List<String> correctHeaders = Arrays.asList("student_id", "course_code");
+        List<String> correctHeaders = Arrays.asList("student_id", "course_code","course_section","term");
 
         assertTrue(enrollmentValidation.validateFieldOrder(correctHeaders));
     }
 
     @Test
     public void testValidateFieldOrderShouldReturnFalseWhenOrderIsIncorrect() {
-        List<String> incorrectHeaders = Arrays.asList("course_code", "student_id");
+        List<String> incorrectHeaders = Arrays.asList("course_code","course_section", "student_id");
 
         assertFalse(enrollmentValidation.validateFieldOrder(incorrectHeaders));
     }

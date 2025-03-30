@@ -3,13 +3,13 @@ package services.mappers;
 import models.Course;
 import models.Enrollment;
 import models.User;
-import org.apache.commons.csv.CSVRecord;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import repository.core.CourseRepository;
 import repository.core.UserRepository;
+import services.processors.record.InputRecord;
 
 import java.util.Optional;
 
@@ -27,7 +27,7 @@ public class EnrollmentEntityMapperTest {
     private CourseRepository courseRepository;
 
     @Mock
-    private CSVRecord csvRecord;
+    private InputRecord csvRecord;
 
     @Mock
     private User mockStudent;
@@ -46,9 +46,11 @@ public class EnrollmentEntityMapperTest {
     public void testMapToEntityShouldReturnEnrollmentWhenStudentAndCourseExist() {
         when(csvRecord.get("student_id")).thenReturn(String.valueOf(123L));
         when(csvRecord.get("course_code")).thenReturn("CS101");
+        when(csvRecord.get("course_section")).thenReturn("SS");
+        when(csvRecord.get("term")).thenReturn("Fall 2024");
 
         when(userRepository.findById(123L)).thenReturn(Optional.of(mockStudent));
-        when(courseRepository.findByCourseCode("CS101")).thenReturn(Optional.of(mockCourse));
+        when(courseRepository.findByCourseCodeAndSectionAndTerm("CS101", "SS", "Fall 2024")).thenReturn(Optional.of(mockCourse));
 
         Enrollment enrollment = enrollmentEntityMapper.mapToEntity(csvRecord);
 
@@ -62,9 +64,11 @@ public class EnrollmentEntityMapperTest {
     public void testMapToEntityShouldReturnEnrollmentWithNullStudentWhenStudentDoesNotExist() {
         when(csvRecord.get("student_id")).thenReturn(String.valueOf(999L));
         when(csvRecord.get("course_code")).thenReturn("CS101");
+        when(csvRecord.get("course_section")).thenReturn("SS");
+        when(csvRecord.get("term")).thenReturn("Fall 2024");
 
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
-        when(courseRepository.findByCourseCode("CS101")).thenReturn(Optional.of(mockCourse));
+        when(courseRepository.findByCourseCodeAndSectionAndTerm("CS101", "SS", "Fall 2024")).thenReturn(Optional.of(mockCourse));
 
         Enrollment enrollment = enrollmentEntityMapper.mapToEntity(csvRecord);
 
@@ -78,9 +82,11 @@ public class EnrollmentEntityMapperTest {
     public void testMapToEntityShouldReturnEnrollmentWithNullCourseWhenCourseDoesNotExist() {
         when(csvRecord.get("student_id")).thenReturn(String.valueOf(123L));
         when(csvRecord.get("course_code")).thenReturn("CS999");
+        when(csvRecord.get("course_section")).thenReturn("SS");
+        when(csvRecord.get("term")).thenReturn("Fall 2024");
 
         when(userRepository.findById(123L)).thenReturn(Optional.of(mockStudent));
-        when(courseRepository.findByCourseCode("CS999")).thenReturn(Optional.empty());
+        when(courseRepository.findByCourseCodeAndSectionAndTerm("CS999", "SS", "Fall 2024")).thenReturn(Optional.empty());
 
         Enrollment enrollment = enrollmentEntityMapper.mapToEntity(csvRecord);
 
@@ -94,9 +100,11 @@ public class EnrollmentEntityMapperTest {
     public void testMapToEntityShouldReturnEnrollmentWithNullStudentAndNullCourseWhenBothDoNotExist() {
         when(csvRecord.get("student_id")).thenReturn(String.valueOf(999L));
         when(csvRecord.get("course_code")).thenReturn("CS999");
+        when(csvRecord.get("course_section")).thenReturn("SS");
+        when(csvRecord.get("term")).thenReturn("Fall 2024");
 
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
-        when(courseRepository.findByCourseCode("CS999")).thenReturn(Optional.empty());
+        when(courseRepository.findByCourseCodeAndSectionAndTerm("CS999", "SS", "Fall 2024")).thenReturn(Optional.empty());
 
         Enrollment enrollment = enrollmentEntityMapper.mapToEntity(csvRecord);
 

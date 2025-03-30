@@ -55,7 +55,7 @@ public class CSVProcessorTest {
 
     @Test
     public void testParseAndProcessFile_ShouldReturnValidList() {
-        List<Object> result = csvProcessor.parseAndProcessFile(mockFilePath).join();
+        List<Object> result = csvProcessor.processData(mockFilePath).join();
         assertFalse(result.isEmpty());
     }
 
@@ -65,7 +65,7 @@ public class CSVProcessorTest {
 
         CompletionException exception = assertThrows(
                 CompletionException.class,
-                () -> csvProcessor.parseAndProcessFile(mockFilePath).join()
+                () -> csvProcessor.processData(mockFilePath).join()
         );
 
         assertTrue(exception.getCause() instanceof InvalidCsvException);
@@ -77,11 +77,11 @@ public class CSVProcessorTest {
         when(validations.validateSemantics(any(), any())).thenReturn(false);
         CompletionException exception = assertThrows(
                 CompletionException.class,
-                () -> csvProcessor.parseAndProcessFile(mockFilePath).join()
+                () -> csvProcessor.processData(mockFilePath).join()
         );
 
         assertTrue(exception.getCause() instanceof InvalidCsvException);
-        assertEquals("No valid records found after semantic validation.", exception.getCause().getMessage());
+        assertEquals("No valid records found. Data might already exist.", exception.getCause().getMessage());
     }
 
     @Test
@@ -93,8 +93,8 @@ public class CSVProcessorTest {
                 "failedRecords", List.of()
         )));
 
-        String message = csvProcessor.saveProcessedFileData(data).join();
-        assertEquals("CSV uploaded and processed successfully.", message);
+        String message = csvProcessor.saveProcessedData(data).join();
+        assertEquals("Upload completed successfully. All records were new.", message);
     }
 
     @Test
@@ -106,8 +106,8 @@ public class CSVProcessorTest {
                 "failedRecords", List.of("record1")
         )));
 
-        String message = csvProcessor.saveProcessedFileData(data).join();
-        assertEquals("Partial success: 1 records saved, 1 failed.", message);
+        String message = csvProcessor.saveProcessedData(data).join();
+        assertEquals("Upload completed: 1 new records added, 1 duplicate records skipped.", message);
     }
 
     @Test
@@ -117,8 +117,8 @@ public class CSVProcessorTest {
         when(repository.saveAll(data))
                 .thenReturn(CompletableFuture.failedFuture(new RuntimeException("DB failure")));
 
-        String message = csvProcessor.saveProcessedFileData(data).join();
+        String message = csvProcessor.saveProcessedData(data).join();
 
-        assertEquals("Failed to process CSV file.", message);
+        assertEquals("An error occurred while saving the records.", message);
     }
 }

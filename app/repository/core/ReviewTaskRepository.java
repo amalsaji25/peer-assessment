@@ -1,6 +1,10 @@
 package repository.core;
 
+import models.Feedback;
 import models.ReviewTask;
+import models.dto.FeedbackDTO;
+import models.dto.ReviewTaskDTO;
+import models.enums.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import play.db.jpa.JPAApi;
@@ -9,6 +13,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -61,6 +66,51 @@ public class ReviewTaskRepository implements Repository<ReviewTask> {
                     .setParameter("courseCode", courseCode)
                     .getSingleResult();
             return count > 0;
+        });
+    }
+
+    public CompletableFuture<Integer> findReviewCountByStudentIdAndStatus(Long userId, Status status) {
+        return CompletableFuture.supplyAsync(() -> jpaApi.withTransaction(entityManager -> {
+            String queryString = "SELECT COUNT(rt) FROM ReviewTask rt WHERE rt.reviewer.userId = :userId AND rt.status = :status";
+            Long count = entityManager.createQuery(queryString, Long.class)
+                    .setParameter("userId", userId)
+                    .setParameter("status", status)
+                    .getSingleResult();
+            return count.intValue();
+        }), executor);
+    }
+
+    public CompletableFuture<Integer> findReviewCountByStudentIdAndStatusForCourse(Long userId, String courseCode, Status status) {
+        return CompletableFuture.supplyAsync(() -> jpaApi.withTransaction(entityManager -> {
+            String queryString = "SELECT COUNT(rt) FROM ReviewTask rt WHERE rt.reviewer.userId = :userId AND rt.status = :status AND rt.assignment.course.courseCode = :courseCode";
+            Long count = entityManager.createQuery(queryString, Long.class)
+                    .setParameter("userId", userId)
+                    .setParameter("status", status)
+                    .setParameter("courseCode", courseCode)
+                    .getSingleResult();
+            return count.intValue();
+        }), executor);
+    }
+
+    public void saveReviewTaskFeedback(ReviewTaskDTO reviewTaskDTO) {
+        jpaApi.withTransaction(entityManager -> {
+
+            // Update feedback entries
+            for (FeedbackDTO feedbackDTO : reviewTaskDTO.getFeedbacks()) {
+                Feedback feedback = entityManager.find(Feedback.class, feedbackDTO.getFeedbackId());
+                if (feedback != null) {
+                    feedback.setFeedbackText(feedbackDTO.getFeedbackText());
+                    feedback.setScore(feedbackDTO.getObtainedScore());
+                    entityManager.merge(feedback);
+                }
+
+                // Update review task status
+                ReviewTask reviewTask = entityManager.find(ReviewTask.class, reviewTaskDTO.getReviewTaskId());
+                if (reviewTask != null) {
+                    reviewTask.setStatus(reviewTaskDTO.getReviewStatus());
+                    entityManager.merge(reviewTask);
+                }
+            }
         });
     }
 }

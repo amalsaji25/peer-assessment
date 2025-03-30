@@ -7,8 +7,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import services.processors.FileProcessor;
-import services.processors.FileProcessorStrategy;
+import services.processors.Processor;
+import services.processors.ProcessorStrategy;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -23,10 +23,10 @@ import static org.mockito.Mockito.*;
 public class FileUploadServiceTest {
 
     @Mock
-    private FileProcessorStrategy fileProcessorStrategy;
+    private ProcessorStrategy processorStrategy;
 
     @Mock
-    private FileProcessor<Object> fileProcessor;
+    private Processor<Object,Path> processor;
 
     @InjectMocks
     private FileUploadService fileUploadService;
@@ -57,7 +57,7 @@ public class FileUploadServiceTest {
 
     @Test
     public void testGetFileProcessorShouldThrowForInvalidFileType() {
-        when(fileProcessorStrategy.getProcessor("invalid")).thenReturn(null);
+        when(processorStrategy.getFileProcessor("invalid")).thenReturn(null);
         when(mockFile.getName()).thenReturn("valid.csv");
 
         CompletionException ex = assertThrows(CompletionException.class, () ->
@@ -70,25 +70,25 @@ public class FileUploadServiceTest {
 
     @Test
     public void testGetFileProcessorShouldReturnValidProcessor() {
-        when(fileProcessorStrategy.getProcessor("users")).thenReturn(fileProcessor);
+        when(processorStrategy.getFileProcessor("users")).thenReturn(processor);
 
-        FileProcessor<Object> result = fileUploadService.getFileProcessor(mockFile, "users").join();
+        Processor<Object, Path> result = fileUploadService.getFileProcessor(mockFile, "users").join();
         assertNotNull(result);
     }
 
     @Test
     public void testParseAndSaveSuccessfully() {
-        when(fileProcessorStrategy.getProcessor("users")).thenReturn(fileProcessor);
+        when(processorStrategy.getFileProcessor("users")).thenReturn(processor);
 
         List<Object> parsedData = List.of(new Object());
 
-        when(fileProcessor.parseAndProcessFile(mockPath))
+        when(processor.processData(mockPath))
                 .thenReturn(CompletableFuture.completedFuture(parsedData));
 
-        when(fileProcessor.saveProcessedFileData(parsedData))
+        when(processor.saveProcessedData(parsedData))
                 .thenReturn(CompletableFuture.completedFuture("Success: All records saved."));
 
-        CompletableFuture<FileProcessor<Object>> processorFuture = fileUploadService.getFileProcessor(mockFile, "users");
+        CompletableFuture<Processor<Object, Path>> processorFuture = fileUploadService.getFileProcessor(mockFile, "users");
 
         CompletableFuture<String> resultFuture = processorFuture
                 .thenCompose(processor -> fileUploadService.parseAndProcessFile(processor, mockFile)

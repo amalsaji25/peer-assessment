@@ -2,9 +2,10 @@ package services.mappers;
 
 import models.ReviewTask;
 import models.User;
-import models.enums.ReviewStatus;
+import models.enums.Status;
 import org.apache.commons.csv.CSVRecord;
 import repository.core.UserRepository;
+import services.processors.record.InputRecord;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public class ReviewTaskEntityMapper implements EntityMapper<ReviewTask> {
     }
 
     @Override
-    public List<ReviewTask> mapToEntityList(CSVRecord record) {
+    public List<ReviewTask> mapToEntityList(InputRecord record) {
         Long groupId = Long.parseLong(record.get("Group ID").trim());
         String groupName = record.get("Group Name").trim();
         int groupSize = Integer.parseInt(record.get("Group Size").trim());
@@ -41,7 +42,7 @@ public class ReviewTaskEntityMapper implements EntityMapper<ReviewTask> {
                             null,
                             reviewer,
                             reviewee,
-                            ReviewStatus.PENDING,
+                            Status.PENDING,
                             groupId,
                             groupName,
                             groupSize
@@ -53,7 +54,7 @@ public class ReviewTaskEntityMapper implements EntityMapper<ReviewTask> {
     }
 
     @Override
-    public ReviewTask mapToEntity(CSVRecord record) {
+    public ReviewTask mapToEntity(InputRecord record) {
         return null;
     }
 }

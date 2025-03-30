@@ -109,4 +109,21 @@ public class UserRepository implements Repository<User> {
                     return finalResponse;
                 });
     }
+
+    public void updateUserPassword(User userId) {
+        jpaApi.withTransaction(entityManager -> {
+            try {
+                User user = entityManager.find(User.class, userId.getUserId());
+                if (user != null) {
+                    user.setPassword(userId.getPassword());
+                    entityManager.merge(user);
+                    log.info("User password updated successfully for user ID: {}", userId.getUserId());
+                } else {
+                    log.warn("User with ID {} not found for password update", userId.getUserId());
+                }
+            } catch (Exception e) {
+                log.error("Failed to update password for user ID {} - {}", userId.getUserId(), e.getMessage());
+            }
+        });
+    }
 }

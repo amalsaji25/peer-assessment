@@ -8,7 +8,10 @@ import java.util.List;
 @Singleton
 public class AssignmentForm {
     public String title;
+    public String course;
+    public String courseSection;
     public String courseCode;
+    public String term;
     public String description;
     public LocalDate dueDate;
     public LocalDate startDate;
@@ -33,16 +36,16 @@ public class AssignmentForm {
         return title;
     }
 
-    public String getCourseCode() {
-        return courseCode;
+    public String getCourse() {
+        return course;
     }
 
     public void setTitle(String title) {
         this.title = title;
     }
 
-    public void setCourseCode(String courseCode) {
-        this.courseCode = courseCode;
+    public void setCourse(String course) {
+        this.course = course;
     }
 
     public void setDescription(String description) {
@@ -76,4 +79,25 @@ public class AssignmentForm {
         this.startDate = startDate;
     }
 
+    public String getTerm() {
+        return term;
+    }
+
+    public void setTerm(String term) {
+        this.term = term;
+    }
+
+    public void setCourseSection(String courseSection) {
+        this.courseSection = courseSection;
+    }
+
+    public String getCourseSection() {
+        return courseSection;
+    }
+    public String getCourseCode() {
+        return courseCode;
+    }
+    public void setCourseCode(String courseCode) {
+        this.courseCode = courseCode;
+    }
 }

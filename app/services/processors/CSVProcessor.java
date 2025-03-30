@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import repository.core.Repository;
 import services.mappers.EntityMapper;
+import services.processors.record.CSVInputRecord;
 import services.validations.Validations;
 
 import javax.inject.Inject;
@@ -19,7 +20,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Singleton
-public class CSVProcessor<T> implements FileProcessor<T> {
+public class CSVProcessor<T> implements Processor<T, Path> {
 
     private final static Logger log = LoggerFactory.getLogger(CSVProcessor.class);
     private final Validations<T> validations;
@@ -34,7 +35,7 @@ public class CSVProcessor<T> implements FileProcessor<T> {
     }
 
     @Override
-    public CompletableFuture<List<T>> parseAndProcessFile(Path filePath) {
+    public CompletableFuture<List<T>> processData(Path filePath) {
     return CompletableFuture.supplyAsync(
         () -> {
           try (Reader reader = Files.newBufferedReader(filePath);
@@ -58,8 +59,8 @@ public class CSVProcessor<T> implements FileProcessor<T> {
             // Perform Syntax Validation & Map to Entities
             List<T> syntaxValidRecords =
                 csvParser.getRecords().stream()
-                    .filter(validations::validateSyntax)
-                    .flatMap(record -> entityMapper.mapToEntityList(record).stream())// For records (e.g., users, courses), mapToEntityList will return a single-element list, but for record like ReviewTask, it will return a list of ReviewTask objects
+                    .filter(record -> validations.validateSyntax(new CSVInputRecord(record)))
+                    .flatMap(record -> entityMapper.mapToEntityList(new CSVInputRecord(record)).stream())// For records (e.g., users, courses), mapToEntityList will return a single-element list, but for record like ReviewTask, it will return a list of ReviewTask objects
                     .toList();
 
             log.info(
@@ -77,7 +78,7 @@ public class CSVProcessor<T> implements FileProcessor<T> {
 
             if (semanticValidRecords.isEmpty()) {
               log.warn("No valid records found after semantic validation.");
-              throw new InvalidCsvException("No valid records found after semantic validation.");
+              throw new InvalidCsvException("No valid records found. Data might already exist.");
             }
             return semanticValidRecords;
           }catch (InvalidCsvException e) {
@@ -91,22 +92,22 @@ public class CSVProcessor<T> implements FileProcessor<T> {
     }
 
     @Override
-    public CompletableFuture<String> saveProcessedFileData(List<T> processedData) {
+    public CompletableFuture<String> saveProcessedData(List<T> processedData) {
                 return (CompletableFuture<String>) repository.saveAll(processedData).thenApply(saveStatus -> {
                     int successCount = (int) saveStatus.get("successCount");
-                    int failedCount = (int) saveStatus.get("failedCount");
-                    List<String> failedRecords = (List<String>) saveStatus.get("failedRecords");
+                    int skippedCount = (int) saveStatus.get("failedCount");
+                    List<String> skippedRecords = (List<String>) saveStatus.get("failedRecords");
 
-                    log.info("Successfully saved {} records. {} records failed.", successCount, failedCount);
+                    log.info("Successfully saved {} records. Skipped {} already existing records.", successCount, skippedCount);
 
-                    if (failedCount > 0) {
-                        log.warn("Some records failed to save: {}", failedRecords);
-                        return "Partial success: " + successCount + " records saved, " + failedCount + " failed.";
+                    if (skippedCount > 0) {
+                        log.warn("Some records failed to save: {}", skippedRecords);
+                        return "Upload completed: " + successCount + " new records added, " + skippedCount + " duplicate records skipped.";
                     }
-                    return "CSV uploaded and processed successfully.";
+                    return "Upload completed successfully. All records were new.";
                 }).exceptionally(ex -> {
                     log.error("Error saving records: {}", ex.getMessage(), ex);
-                    return "Failed to process CSV file.";
+                    return "An error occurred while saving the records.";
                 });
         }
 }

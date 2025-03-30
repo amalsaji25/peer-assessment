@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import repository.core.UserRepository;
+import services.processors.record.InputRecord;
 
 import java.util.*;
 
@@ -21,7 +22,7 @@ public class UserValidationTest {
     private UserRepository userRepository;
 
     @Mock
-    private CSVRecord csvRecord;
+    private InputRecord csvRecord;
 
     @Mock
     private User mockUser;
@@ -90,14 +91,14 @@ public class UserValidationTest {
     /** Test Field Order Validation **/
     @Test
     public void testValidateFieldOrderShouldReturnTrueWhenOrderIsCorrect() {
-        List<String> correctHeaders = Arrays.asList("user_id", "email", "password", "first_name", "last_name", "role");
+        List<String> correctHeaders = Arrays.asList("user_id", "email", "first_name", "last_name", "role");
 
         assertTrue(userValidation.validateFieldOrder(correctHeaders));
     }
 
     @Test
     public void testValidateFieldOrderShouldReturnFalseWhenOrderIsIncorrect() {
-        List<String> incorrectHeaders = Arrays.asList("email", "user_id", "password", "first_name", "last_name", "role");
+        List<String> incorrectHeaders = Arrays.asList("email", "user_id", "first_name", "last_name", "role");
 
         assertFalse(userValidation.validateFieldOrder(incorrectHeaders));
     }

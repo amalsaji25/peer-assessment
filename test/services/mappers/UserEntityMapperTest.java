@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import services.processors.record.InputRecord;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -15,7 +16,7 @@ public class UserEntityMapperTest {
     private UserEntityMapper userEntityMapper;
 
     @Mock
-    private CSVRecord csvRecord;
+    private InputRecord csvRecord;
 
     @Before
     public void setUp() {

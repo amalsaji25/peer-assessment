@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import repository.core.Repository;
 import repository.core.ReviewTaskRepository;
+import services.processors.record.InputRecord;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class ReviewTaskValidation implements Validations<ReviewTask> {
     }
 
     @Override
-    public boolean validateSyntax(CSVRecord record) {
+    public boolean validateSyntax(InputRecord record) {
         boolean isValidSyntax = mandatoryFields.stream().allMatch(field -> record.isMapped(field) && !record.get(field).isEmpty());
 
         if(!isValidSyntax) {

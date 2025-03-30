@@ -6,6 +6,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import repository.core.Repository;
+import services.processors.record.InputRecord;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -62,7 +63,7 @@ public class AssignmentFormValidation implements Validations<ReviewTask> {
   }
 
   @Override
-  public boolean validateSyntax(CSVRecord record) {
+  public boolean validateSyntax(InputRecord record) {
     return false;
   }
 

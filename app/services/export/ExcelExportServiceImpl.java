@@ -144,7 +144,7 @@ public class ExcelExportServiceImpl implements ExportService {
                     row.createCell(0).setCellValue(feedback.getReviewerId());
                     row.createCell(1).setCellValue(feedback.getReviewerName());
                     row.createCell(2).setCellValue(feedback.getQuestionText());
-                    row.createCell(3).setCellValue(feedback.getScore());
+                    row.createCell(3).setCellValue(feedback.getMaxScore());
                     row.createCell(4).setCellValue(feedback.getFeedbackText());
                 }
 

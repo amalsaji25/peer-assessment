@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import forms.AssignmentForm;
 import models.*;
 import models.dto.AssignmentEditDTO;
-import models.dto.AssignmentExportDTO;
 import models.dto.AssignmentUploadContext;
+import models.enums.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import play.libs.Files;
@@ -19,7 +19,6 @@ import services.FileUploadService;
 import services.processors.CSVProcessor;
 import services.validations.AssignmentFormValidation;
 import services.validations.ReviewTaskValidation;
-import services.validations.Validations;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -41,28 +40,30 @@ public class AssignmentServiceImpl implements AssignmentService {
     private final CourseRepository courseRepository;
     private final FileUploadService fileUploadService;
     private static final Logger log = LoggerFactory.getLogger(AssignmentServiceImpl.class);
+    private final EnrollmentService enrollmentService;
 
     @Inject
-    public AssignmentServiceImpl(AssignmentRepository assignmentRepository, AssignmentFormValidation assignmentFormValidation, CourseRepository courseRepository, FileUploadService fileUploadService) {
+    public AssignmentServiceImpl(AssignmentRepository assignmentRepository, AssignmentFormValidation assignmentFormValidation, CourseRepository courseRepository, FileUploadService fileUploadService, EnrollmentService enrollmentService) {
         this.assignmentRepository = assignmentRepository;
         this.assignmentFormValidation = assignmentFormValidation;
         this.courseRepository = courseRepository;
         this.fileUploadService = fileUploadService;
+        this.enrollmentService = enrollmentService;
     }
 
     @Override
-    public CompletableFuture<Integer> getAssignmentCountByProfessorId(Long userId, String courseCode) {
-        return assignmentRepository.findAssignmentCountByProfessorId(userId, courseCode);
+    public CompletableFuture<Integer> getAssignmentCountByProfessorId(Long userId, String courseCode, String courseSection, String term) {
+        return assignmentRepository.findAssignmentCountByProfessorId(userId, courseCode, courseSection, term );
     }
 
     @Override
-    public CompletableFuture<Result> createAssignment(AssignmentForm assignmentForm, List<ReviewTask> reviewTasks) {
+    public CompletableFuture<Result> createAssignment(AssignmentForm assignmentForm) {
         if(!assignmentFormValidation.isValid(assignmentForm)) {
             log.info("Invalid assignment creation form");
             return CompletableFuture.completedFuture(Results.badRequest("Invalid assignment creation form"));
         }
 
-        Optional<Course> course = courseRepository.findByCourseCode(assignmentForm.getCourseCode());
+        Optional<Course> course = courseRepository.findByCourseCodeAndSectionAndTerm(assignmentForm.getCourseCode(), assignmentForm.getCourseSection(), assignmentForm.getTerm());
 
         if(course.isEmpty()) {
             log.info("Course not found");
@@ -76,6 +77,25 @@ public class AssignmentServiceImpl implements AssignmentService {
         assignment.setStartDate(assignmentForm.getStartDate());
         assignment.setDueDate(assignmentForm.getDueDate());
 
+        LocalDate today = LocalDate.now();
+        boolean fileUploaded = course.get().isStudentFileUploaded();
+        LocalDate startDate = assignmentForm.getStartDate();
+        LocalDate dueDate = assignmentForm.getDueDate();
+
+        if (!fileUploaded) {
+            assignment.setStatus(Status.PENDING);
+            assignment.setStatusReason("Student file not uploaded");
+        } else if (today.isBefore(startDate)) {
+            assignment.setStatus(Status.PENDING);
+            assignment.setStatusReason("Peer assessment not yet started");
+        } else if (today.isAfter(dueDate)) {
+            assignment.setStatusReason("Peer assessment due date has passed");
+            assignment.setStatus(Status.COMPLETED);
+        } else {
+            assignment.setStatusReason("Student file is uploaded and peer assessment start date is reached");
+            assignment.setStatus(Status.ACTIVE);
+        }
+
 
         List<FeedbackQuestion> feedbackQuestions = new ArrayList<>();
         assignmentForm.getQuestions().forEach(reviewQuestion -> {
@@ -87,33 +107,19 @@ public class AssignmentServiceImpl implements AssignmentService {
             feedbackQuestions.add(feedbackQuestion);
         });
 
+        // Private comment for professor
+        FeedbackQuestion privateComment = new FeedbackQuestion();
+        privateComment.setQuestionText("Private Comment for Professor");
+        privateComment.setMaxMarks(0);
+        privateComment.setAssignment(assignment);
+        feedbackQuestions.add(privateComment);
+
         // Map the feedback questions to the assignment
         assignment.setFeedbackQuestions(feedbackQuestions);
-
-        // Map the review tasks to the assignment
-        assignment.setReviewTasks(reviewTasks);
-
-        // Map the assignment to each task
-        reviewTasks.forEach(reviewTask -> {reviewTask.setAssignment(assignment);});
-
-        reviewTasks.forEach(reviewTask -> {
-
-            List<Feedback> reviewTaskFeedbacks = new ArrayList<>();
-            assignment.getFeedbackQuestions().forEach(feedbackQuestion -> {
-                Feedback feedback = new Feedback();
-                feedback.setQuestion(feedbackQuestion);
-                feedback.setReviewTask(reviewTask);
-                feedback.setScore(0); //default
-                feedback.setFeedbackText(""); //default
-                reviewTaskFeedbacks.add(feedback);
-            });
-            reviewTask.setFeedbacks(reviewTaskFeedbacks);
-        });
 
         assignmentRepository.save(assignment);
 
         log.info("Assignment created successfully with ID: {}", assignment.getAssignmentId());
-
 
         ObjectNode successJson = Json.newObject();
         successJson.put("message", "Assignment created successfully");
@@ -128,7 +134,14 @@ public class AssignmentServiceImpl implements AssignmentService {
         AssignmentForm assignmentCreationForm = new AssignmentForm();
         Map<String,String[]> fields = assignmentForm.asFormUrlEncoded();
         assignmentCreationForm.setTitle(getFirst(fields, "title"));
-        assignmentCreationForm.setCourseCode(getFirst(fields, "courseCode"));
+        assignmentCreationForm.setCourse(getFirst(fields, "courseCode"));
+        String course = getFirst(fields, "courseCode");
+        String courseCode = course.split(":::")[0].trim();
+        String courseSection = course.split(":::")[1].trim();
+        String term = course.split(":::")[2].trim();
+        assignmentCreationForm.setCourseCode(courseCode);
+        assignmentCreationForm.setCourseSection(courseSection);
+        assignmentCreationForm.setTerm(term);
         assignmentCreationForm.setDescription(getFirst(fields, "description"));
         String startDate = getFirst(fields,"startDate");
         String dueDate = getFirst(fields,"dueDate");
@@ -229,80 +242,87 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     @Override
     public CompletionStage<Void> updateAssignment(Long assignmentId, AssignmentForm form) {
-        return CompletableFuture.runAsync(() -> {
+    return CompletableFuture.runAsync(
+        () -> {
 
-            // Fetch the assignment and the existing feedback questions
-            Assignment assignment = assignmentRepository.findByIdWithFeedbackQuestions(assignmentId)
-                    .orElseThrow(() -> new IllegalArgumentException("Assignment not found"));
+          // Fetch the assignment and the existing feedback questions
+          Assignment assignment =
+              assignmentRepository
+                  .findByIdWithFeedbackQuestions(assignmentId)
+                  .orElseThrow(() -> new IllegalArgumentException("Assignment not found"));
 
-            // Update the assignment details from the latest form
-            assignment.setTitle(form.title);
-            assignment.setDescription(form.description);
-            assignment.setStartDate(form.startDate);
-            assignment.setDueDate(form.dueDate);
+          // Update the assignment details from the latest form
+          assignment.setTitle(form.title);
+          assignment.setDescription(form.description);
+          assignment.setStartDate(form.startDate);
+          assignment.setDueDate(form.dueDate);
 
-            // Update the course details
-            Course course = courseRepository.findByCourseCode(form.courseCode)
-                    .orElseThrow(() -> new IllegalArgumentException("Course not found"));
-            assignment.setCourse(course);
+          // Update the course details
+          Course course =
+              courseRepository
+                  .findByCourseCodeAndSectionAndTerm(form.courseCode, form.courseSection, form.getTerm())
+                  .orElseThrow(() -> new IllegalArgumentException("Course not found"));
+          assignment.setCourse(course);
 
-            // Map exiting feedback questions by id
+          // Map exiting feedback questions by id
 
-            Map<Long, FeedbackQuestion> existingFeedbackQuestions = assignment.getFeedbackQuestions().stream()
-                    .filter(feedbackQuestion -> feedbackQuestion.getQuestionId() != null)
-                    .collect(Collectors.toMap(FeedbackQuestion::getQuestionId, Function.identity()));
+          Map<Long, FeedbackQuestion> existingFeedbackQuestions =
+              assignment.getFeedbackQuestions().stream()
+                  .filter(feedbackQuestion -> feedbackQuestion.getQuestionId() != null)
+                  .collect(Collectors.toMap(FeedbackQuestion::getQuestionId, Function.identity()));
 
-            // Add new feedback questions
+          // Add new feedback questions
 
-            List<FeedbackQuestion> updatedFeedbackQuestions = new ArrayList<>();
-            form.getQuestions().forEach(reviewQuestion -> {
-                FeedbackQuestion feedbackQuestion;
-                if(reviewQuestion.questionId != null && existingFeedbackQuestions.containsKey(reviewQuestion.questionId)) {
-                    //Update existing feedback question
-                    feedbackQuestion = existingFeedbackQuestions.get(reviewQuestion.questionId);
-                    feedbackQuestion.setQuestionText(reviewQuestion.question);
-                    feedbackQuestion.setMaxMarks(reviewQuestion.marks);
-                    existingFeedbackQuestions.remove(reviewQuestion.questionId);
-                }
-                else{
-                    // Add new feedback question
-                    feedbackQuestion = new FeedbackQuestion();
-                    feedbackQuestion.setQuestionText(reviewQuestion.question);
-                    feedbackQuestion.setMaxMarks(reviewQuestion.marks);
-                    feedbackQuestion.setAssignment(assignment);
-                }
-                updatedFeedbackQuestions.add(feedbackQuestion);
-            });
-
-            // Map the feedback questions to the assignment
-            assignment.setFeedbackQuestions(updatedFeedbackQuestions);
-
-            // Create default feedback entries for new questions
-            List<FeedbackQuestion> newQuestions = updatedFeedbackQuestions.stream()
-                    .filter(q -> q.getQuestionId() == null)
-                    .toList();
-
-            if (!newQuestions.isEmpty()) {
-                for (ReviewTask task : assignment.getReviewTasks()) {
-                    List<Feedback> feedbacks = task.getFeedbacks();
-                    if (feedbacks == null) {
-                        feedbacks = new ArrayList<>();
+          List<FeedbackQuestion> updatedFeedbackQuestions = new ArrayList<>();
+          form.getQuestions()
+              .forEach(
+                  reviewQuestion -> {
+                    FeedbackQuestion feedbackQuestion;
+                    if (reviewQuestion.questionId != null
+                        && existingFeedbackQuestions.containsKey(reviewQuestion.questionId)) {
+                      // Update existing feedback question
+                      feedbackQuestion = existingFeedbackQuestions.get(reviewQuestion.questionId);
+                      feedbackQuestion.setQuestionText(reviewQuestion.question);
+                      feedbackQuestion.setMaxMarks(reviewQuestion.marks);
+                      existingFeedbackQuestions.remove(reviewQuestion.questionId);
+                    } else {
+                      // Add new feedback question
+                      feedbackQuestion = new FeedbackQuestion();
+                      feedbackQuestion.setQuestionText(reviewQuestion.question);
+                      feedbackQuestion.setMaxMarks(reviewQuestion.marks);
+                      feedbackQuestion.setAssignment(assignment);
                     }
+                    updatedFeedbackQuestions.add(feedbackQuestion);
+                  });
 
-                    for (FeedbackQuestion newQ : newQuestions) {
-                        Feedback feedback = new Feedback();
-                        feedback.setQuestion(newQ);
-                        feedback.setReviewTask(task);
-                        feedback.setScore(0);
-                        feedback.setFeedbackText("");
-                        feedbacks.add(feedback);
-                    }
+          // Map the feedback questions to the assignment
+          assignment.setFeedbackQuestions(updatedFeedbackQuestions);
 
-                    task.setFeedbacks(feedbacks);
-                }
+          // Create default feedback entries for new questions
+          List<FeedbackQuestion> newQuestions =
+              updatedFeedbackQuestions.stream().filter(q -> q.getQuestionId() == null).toList();
+
+          if (!newQuestions.isEmpty()) {
+            for (ReviewTask task : assignment.getReviewTasks()) {
+              List<Feedback> feedbacks = task.getFeedbacks();
+              if (feedbacks == null) {
+                feedbacks = new ArrayList<>();
+              }
+
+              for (FeedbackQuestion newQ : newQuestions) {
+                Feedback feedback = new Feedback();
+                feedback.setQuestion(newQ);
+                feedback.setReviewTask(task);
+                feedback.setScore(0);
+                feedback.setFeedbackText("");
+                feedbacks.add(feedback);
+              }
+
+              task.setFeedbacks(feedbacks);
             }
+          }
 
-            assignmentRepository.update(assignment); // merge
+          assignmentRepository.update(assignment); // merge
         });
     }
 
@@ -319,8 +339,11 @@ public class AssignmentServiceImpl implements AssignmentService {
     }
 
     @Override
-    public CompletableFuture<List<Map<String,Object>>> fetchAssignmentsForCourse(String courseCode) {
-        return assignmentRepository.findAssignmentsByCourseId(courseCode);
+    public CompletableFuture<List<Map<String,Object>>> fetchAssignmentsForCourse(String course) {
+        String courseCode = course.split(":::")[0].trim();
+        String courseSection = course.split(":::")[1].trim();
+        String term = course.split(":::")[2].trim();
+        return assignmentRepository.findAssignmentsByCourse(courseCode, courseSection, term );
     }
 
   @Override
@@ -333,6 +356,15 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     // Step 4: Delete assignment itself
     return assignmentRepository.deleteAssignmentById(assignmentId);
+    }
+
+    @Override
+    public CompletableFuture<Integer> getAssignmentCountByStudentId(Long userId, String courseCode) {
+        return enrollmentService.findStudentEnrolledCourseCodes(userId, courseCode)
+                .thenCompose(courseCodes -> {
+                    if (courseCodes.isEmpty()) return CompletableFuture.completedFuture(0);
+                    return assignmentRepository.findAssignmentCountByCourseCodes(courseCodes);
+                });
     }
 
 

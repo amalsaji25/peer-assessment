@@ -2,12 +2,12 @@ package services.validations;
 
 import models.Course;
 import models.User;
-import org.apache.commons.csv.CSVRecord;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import repository.core.CourseRepository;
+import services.processors.record.InputRecord;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +23,7 @@ public class CourseValidationTest {
     private CourseRepository courseRepository;
 
     @Mock
-    private CSVRecord csvRecord;
+    private InputRecord csvRecord;
 
     @Mock
     private Course mockCourse;
@@ -44,8 +44,14 @@ public class CourseValidationTest {
         when(csvRecord.isMapped("course_name")).thenReturn(true);
         when(csvRecord.get("course_name")).thenReturn("Computer Science");
 
+        when(csvRecord.isMapped("course_section")).thenReturn(true);
+        when(csvRecord.get("course_section")).thenReturn("SS");
+
         when(csvRecord.isMapped("professor_id")).thenReturn(true);
         when(csvRecord.get("professor_id")).thenReturn("P123");
+
+        when(csvRecord.isMapped("term")).thenReturn(true);
+        when(csvRecord.get("term")).thenReturn("Fall 2023");
 
         assertTrue(courseValidation.validateSyntax(csvRecord));
     }
@@ -56,8 +62,11 @@ public class CourseValidationTest {
         when(csvRecord.get("course_code")).thenReturn("CS101");
 
         when(csvRecord.isMapped("course_name")).thenReturn(false);
+        when(csvRecord.isMapped("course_section")).thenReturn(true);
         when(csvRecord.isMapped("professor_id")).thenReturn(true);
         when(csvRecord.get("professor_id")).thenReturn("P123");
+        when(csvRecord.isMapped("term")).thenReturn(true);
+        when(csvRecord.get("term")).thenReturn("Fall 2023");
 
         assertFalse(courseValidation.validateSyntax(csvRecord));
     }
@@ -70,8 +79,14 @@ public class CourseValidationTest {
         when(csvRecord.isMapped("course_name")).thenReturn(true);
         when(csvRecord.get("course_name")).thenReturn("");
 
+        when(csvRecord.isMapped("course_section")).thenReturn(true);
+        when(csvRecord.get("course_section")).thenReturn("SS");
+
         when(csvRecord.isMapped("professor_id")).thenReturn(true);
         when(csvRecord.get("professor_id")).thenReturn("P123");
+
+        when(csvRecord.isMapped("term")).thenReturn(true);
+        when(csvRecord.get("term")).thenReturn("Fall 2023");
 
         assertFalse(courseValidation.validateSyntax(csvRecord));
     }
@@ -81,7 +96,7 @@ public class CourseValidationTest {
     @Test
     public void testValidateSemanticsShouldReturnFalseWhenCourseAlreadyExists() {
         when(mockCourse.getCourseCode()).thenReturn("CS101");
-        when(courseRepository.findByCourseCode("CS101")).thenReturn(Optional.of(mockCourse));
+        when(courseRepository.findByCourseCodeAndSectionAndTerm("CS101", "SS", "Fall 2024")).thenReturn(Optional.of(mockCourse));
 
         assertFalse(courseValidation.validateSemantics(mockCourse, courseRepository));
     }
@@ -90,7 +105,7 @@ public class CourseValidationTest {
     public void testValidateSemanticsShouldReturnFalseWhenProfessorIsNull() {
         when(mockCourse.getCourseCode()).thenReturn("CS102");
         when(mockCourse.getProfessor()).thenReturn(null); // Professor is missing
-        when(courseRepository.findByCourseCode("CS102")).thenReturn(Optional.empty());
+        when(courseRepository.findByCourseCodeAndSectionAndTerm("CS102", "SS", "Fall 2024")).thenReturn(Optional.empty());
 
         assertFalse(courseValidation.validateSemantics(mockCourse, courseRepository));
     }
@@ -100,7 +115,7 @@ public class CourseValidationTest {
         User mockProfessor = mock(User.class);
         when(mockCourse.getCourseCode()).thenReturn("CS103");
         when(mockCourse.getProfessor()).thenReturn(mockProfessor);
-        when(courseRepository.findByCourseCode("CS103")).thenReturn(Optional.empty());
+        when(courseRepository.findByCourseCodeAndSectionAndTerm("CS103", "SS", "Fall 2024")).thenReturn(Optional.empty());
 
         assertTrue(courseValidation.validateSemantics(mockCourse, courseRepository));
     }
@@ -109,13 +124,13 @@ public class CourseValidationTest {
 
     @Test
     public void testValidateFieldOrderShouldReturnTrueWhenFieldsAreInCorrectOrder() {
-        List<String> correctHeaders = List.of("course_code", "course_name", "professor_id");
+        List<String> correctHeaders = List.of("course_code", "course_name", "course_section", "professor_id", "term");
         assertTrue(courseValidation.validateFieldOrder(correctHeaders));
     }
 
     @Test
     public void testValidateFieldOrderShouldReturnFalseWhenFieldsAreInIncorrectOrder() {
-        List<String> incorrectHeaders = List.of("course_name", "course_code", "professor_id");
+        List<String> incorrectHeaders = List.of("course_name", "course_code", "professor_id", "term");
         boolean result = courseValidation.validateFieldOrder(incorrectHeaders);
 
         assertFalse("Field order validation should return false for incorrect order", result);

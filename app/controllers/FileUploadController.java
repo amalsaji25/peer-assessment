@@ -9,10 +9,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import models.enums.Roles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import play.libs.Files;
+import play.libs.Json;
 import play.mvc.BodyParser;
 import play.mvc.Http;
 import play.mvc.Result;
@@ -82,11 +85,22 @@ public class FileUploadController {
                     .thenCompose(
                         processedData ->
                             fileUploadService.saveProcessedFileData(fileProcessor, processedData)))
-        .thenApply(result -> ok(result).withSession(AuthenticationService.updateSession(request)))
+        .thenApply(result ->{
+          ObjectNode successJson = Json.newObject();
+          successJson.put("success", result);
+          return ok(successJson).withSession(AuthenticationService.updateSession(request));})
         .exceptionally(
             e -> {
               log.error("File processing failed with error: {}", e.getMessage());
-              return internalServerError("File processing failed with error: " + e.getMessage())
+              Throwable cause = e;
+              while (cause.getCause() != null) {
+                cause = cause.getCause();
+              }
+              String userMessage = cause.getMessage() != null ? cause.getMessage() : "An unexpected error occurred.";
+
+              ObjectNode errorJson = Json.newObject();
+              errorJson.put("error", userMessage);
+              return internalServerError(errorJson)
                   .withSession(AuthenticationService.updateSession(request));
             });
   }

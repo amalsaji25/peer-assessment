@@ -51,6 +51,10 @@ public class Feedback implements Serializable {
         return feedbackText;
     }
 
+    public ReviewTask getReviewTask() {
+        return reviewTask;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }

@@ -3,9 +3,7 @@ package services.core;
 import forms.AssignmentForm;
 import models.ReviewTask;
 import models.dto.AssignmentEditDTO;
-import models.dto.AssignmentExportDTO;
 import models.dto.AssignmentUploadContext;
-import play.libs.Files;
 import play.mvc.Http;
 import play.mvc.Result;
 
@@ -15,9 +13,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 public interface AssignmentService {
-    CompletableFuture<Integer> getAssignmentCountByProfessorId(Long userId, String courseCode);
+    CompletableFuture<Integer> getAssignmentCountByProfessorId(Long userId, String courseCode, String courseSection, String term);
 
-    CompletableFuture<Result> createAssignment(AssignmentForm assignmentForm, List<ReviewTask> reviewTasks);
+    CompletableFuture<Result> createAssignment(AssignmentForm assignmentForm);
 
     CompletableFuture<AssignmentForm> parseAssignmentForm(Http.MultipartFormData assignmentFormData);
 
@@ -30,4 +28,6 @@ public interface AssignmentService {
     CompletableFuture<List<Map<String,Object>>> fetchAssignmentsForCourse(String courseId);
 
     CompletableFuture<Boolean> deleteAssignment(Long assignmentId);
+
+    CompletableFuture<Integer> getAssignmentCountByStudentId(Long userId, String courseCode);
 }

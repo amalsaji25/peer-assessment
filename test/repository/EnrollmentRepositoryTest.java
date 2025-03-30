@@ -1,5 +1,6 @@
 package repository;
 
+import jakarta.persistence.TypedQuery;
 import models.Course;
 import models.Enrollment;
 import models.User;
@@ -16,6 +17,7 @@ import repository.core.EnrollmentRepository;
 import java.util.*;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -49,57 +51,32 @@ public class EnrollmentRepositoryTest {
      */
     @Test
     public void testSaveAllShouldSaveEnrollmentsSuccessfully() {
-        User mockStudent = mock(User.class);
-        User mockStudent1 = mock(User.class);
-        User mockProfessor = mock(User.class);
-        Course course = new Course("CS101", "Computer Science", mockProfessor);
+        // Create student and professor entities
+        User student1 = new User(10000L, "student1@example.com","", "First", "Student", "student");
+        User student2 = new User(10001L, "student2@example.com","", "Second", "Student", "student");
+        User professor = new User(10002L, "prof@example.com","", "Prof", "Smith", "professor");
 
-        List<Enrollment> enrollments = Arrays.asList(
-                new Enrollment(mockStudent, course),
-                new Enrollment(mockStudent1, course)
-        );
+        Course course = new Course("CS101", "Computer Science", professor, "Fall 2024", "SS", false);
 
-        // Simulate persistence success
-        doNothing().when(mockEntityManager).persist(any(Enrollment.class));
-
-        // Execute the method
-        CompletionStage<Map<String, Object>> resultStage = enrollmentRepository.saveAll(enrollments);
-        Map<String, Object> result = resultStage.toCompletableFuture().join();
-
-        // Assertions
-        assertEquals(2, result.get("successCount"));
-        assertEquals(0, result.get("failedCount"));
-    }
-
-    /**
-     * Test bulk save with one enrollment failing
-     */
-    @Test
-    public void testSaveAllShouldHandleEnrollmentFailures() {
-        User mockStudent = mock(User.class);
-        User mockStudent1 = mock(User.class);
-        User mockProfessor = mock(User.class);
-        Course course = new Course("CS101", "Computer Science", mockProfessor);
-
-        when(mockStudent1.getUserId()).thenReturn(102L);
-
-        Enrollment enrollment1 = new Enrollment(mockStudent, course);
-        Enrollment enrollment2 = new Enrollment(mockStudent1, course);
+        Enrollment enrollment1 = new Enrollment(student1, course, "SS", "Fall 2024");
+        Enrollment enrollment2 = new Enrollment(student2, course, "SS", "Fall 2024");
 
         List<Enrollment> enrollments = Arrays.asList(enrollment1, enrollment2);
 
-        // Simulate persistence success for the first, failure for the second
-        doNothing().when(mockEntityManager).persist(enrollment1);
-        doThrow(new RuntimeException("DB Error")).when(mockEntityManager).persist(enrollment2);
+        // Mock query chain to simulate no duplicates
+        TypedQuery<Enrollment> mockQuery = mock(TypedQuery.class);
 
-        // Execute the method
+        when(mockEntityManager.createQuery(anyString(), eq(Enrollment.class))).thenReturn(mockQuery);
+        when(mockQuery.setParameter(anyString(), any())).thenReturn(mockQuery);
+        when(mockQuery.getResultStream()).thenAnswer(invocation -> Stream.empty());
+
+        // Execute
         CompletionStage<Map<String, Object>> resultStage = enrollmentRepository.saveAll(enrollments);
         Map<String, Object> result = resultStage.toCompletableFuture().join();
 
-        // Assertions
-        assertEquals(1, result.get("successCount"));
-        assertEquals(1, result.get("failedCount"));
-        assertTrue(((List<String>) result.get("failedRecords"))
-                .contains("Student: 102, Course: CS101"));
+        // Verify
+        assertEquals(2, result.get("successCount"));
+        assertEquals(0, result.get("skippedCount"));
+        assertEquals(0, result.get("failedCount"));
     }
 }

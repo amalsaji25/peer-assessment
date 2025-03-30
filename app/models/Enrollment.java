@@ -5,7 +5,8 @@ import jakarta.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "enrollments",uniqueConstraints = @UniqueConstraint(columnNames = {"student_id", "course_code"}))
+@Table(name = "enrollments",uniqueConstraints = @UniqueConstraint(columnNames = {"student_id", "course_code", "course_section", "term"}),
+        indexes = @Index(name = "enrollment", columnList = "student_id,course_code, course_section,term"))
 public class Enrollment implements Serializable {
 
     @Id
@@ -18,14 +19,22 @@ public class Enrollment implements Serializable {
     private User student;
 
     @ManyToOne
-    @JoinColumn(name = "course_code", referencedColumnName = "course_code", nullable = false)
+    @JoinColumn(name = "course_code", referencedColumnName = "course_id", nullable = false)
     private Course course;
+
+    @Column(name = "course_section", nullable = false)
+    private String courseSection;
+
+    @Column(name = "term", nullable = false)
+    private String term;
 
     public Enrollment(){}
 
-    public Enrollment(User student, Course course) {
+    public Enrollment(User student, Course course, String courseSection, String term) {
         this.student = student;
         this.course = course;
+        this.courseSection = courseSection;
+        this.term = term;
     }
 
     public Long getEnrollmentId() {
@@ -38,5 +47,17 @@ public class Enrollment implements Serializable {
 
     public Course getCourse() {
         return course;
+    }
+
+    public String getTerm() {
+        return term;
+    }
+
+    public String getCourseSection() {
+        return courseSection;
+    }
+
+    public void setCourseSection(String courseSection) {
+        this.courseSection = courseSection;
     }
 }

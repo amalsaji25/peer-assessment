@@ -2,8 +2,11 @@ package repository;
 
 import jakarta.persistence.TypedQuery;
 import models.Assignment;
-import models.dto.AssignmentSummaryDTO;
+import models.ReviewTask;
+import models.dto.FeedbackDTO;
 import models.dto.PeerReviewSummaryDTO;
+import models.dto.ReviewTaskDTO;
+import models.enums.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import play.db.jpa.JPAApi;
@@ -12,10 +15,13 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Singleton
 public class DashboardRepository {
@@ -29,7 +35,7 @@ public class DashboardRepository {
     }
 
 
-    public CompletableFuture<List<PeerReviewSummaryDTO>> getPeerReviewProgressForProfessor(Long userId, String filterByCourseCode) {
+    public CompletableFuture<List<PeerReviewSummaryDTO>> getPeerReviewProgressForProfessor(Long userId, String filterByCourseCode, String courseSection, String term) {
         return CompletableFuture.supplyAsync(()->jpaApi.withTransaction(entityManger -> {
 
             List<PeerReviewSummaryDTO> result = new ArrayList<>();
@@ -37,11 +43,13 @@ public class DashboardRepository {
             String queryString;
             TypedQuery<Assignment> query;
 
-            if(filterByCourseCode != null){
-                queryString = "SELECT a FROM Assignment a WHERE a.course.courseCode = :courseCode AND a.course.professor.userId = :userId ";
+            if(filterByCourseCode != null && courseSection != null && term != null){
+                queryString = "SELECT a FROM Assignment a WHERE a.course.courseCode = :courseCode AND a.course.professor.userId = :userId AND a.course.courseSection = :courseSection AND a.course.term = :term ";
                 query = entityManger.createQuery(queryString, Assignment.class)
                         .setParameter("courseCode", filterByCourseCode)
-                        .setParameter("userId", userId);
+                        .setParameter("userId", userId)
+                        .setParameter("courseSection", courseSection)
+                        .setParameter("term", term);
             }
             else{
                 queryString = "SELECT a FROM Assignment a WHERE a.course.professor.userId = :userId ";
@@ -54,32 +62,52 @@ public class DashboardRepository {
             for (Assignment assignment : assignments) {
                 Long assignmentId = assignment.getAssignmentId();
                 String courseCode = assignment.getCourse().getCourseCode();
+                Long courseId = assignment.getCourse().getCourseId();
 
-                int totalReviews = entityManger.createQuery("SELECT COUNT(r) FROM ReviewTask r WHERE r.assignment.assignmentId = :assignmentId", Long.class)
+                // Fetch review tasks
+                List<ReviewTask> reviewTasks = entityManger.createQuery(
+                                "SELECT r FROM ReviewTask r WHERE r.assignment.assignmentId = :assignmentId", ReviewTask.class)
                         .setParameter("assignmentId", assignmentId)
+                        .getResultList();
+
+                int totalReviews = reviewTasks.size();
+
+                // Task-based completed reviews
+                int completedReviewTasks = (int) reviewTasks.stream()
+                        .filter(rt -> rt.getStatus() == Status.COMPLETED)
+                        .count();
+
+                // Distinct reviewers (members)
+                Set<Long> distinctReviewers = reviewTasks.stream()
+                        .map(rt -> rt.getReviewer().getUserId())
+                        .collect(Collectors.toSet());
+
+                int totalMembers = distinctReviewers.size();
+
+                // Members who completed all their assigned reviews
+                int completedMembers = (int) distinctReviewers.stream()
+                        .filter(reviewerId -> reviewTasks.stream()
+                                .filter(rt -> rt.getReviewer().getUserId().equals(reviewerId))
+                                .allMatch(rt -> rt.getStatus() == Status.COMPLETED))
+                        .count();
+
+                // Member-based progress
+                int progress = totalMembers == 0 ? 0 : Math.round((completedMembers * 100f) / totalMembers);
+
+                // Total students enrolled
+                int studentCount = entityManger.createQuery(
+                                "SELECT COUNT(e) FROM Enrollment e WHERE e.course.courseId = :courseId", Long.class)
+                        .setParameter("courseId", courseId)
                         .getSingleResult()
                         .intValue();
 
-                int completedReviews = entityManger.createQuery("SELECT COUNT(r) FROM ReviewTask r WHERE r.assignment.assignmentId = :assignmentId AND r.status = 'COMPLETED'", Long.class)
-                        .setParameter("assignmentId", assignmentId)
-                        .getSingleResult()
-                        .intValue();
-
-                // Get the total number of students enrolled in the course
-
-                int studentCount = entityManger.createQuery("SELECT COUNT(e) FROM Enrollment e WHERE e.course.courseCode = :courseCode", Long.class)
-                        .setParameter("courseCode", assignment.getCourse().getCourseCode())
-                        .getSingleResult()
-                        .intValue();
-
-
-                int progress = totalReviews == 0 ? 0 : (completedReviews * 100) / totalReviews;
+                String courseInfo = courseCode + " (" + assignment.getCourse().getCourseSection() + ")" ;
 
                 PeerReviewSummaryDTO peerReviewSummaryDTO = new PeerReviewSummaryDTO();
                 peerReviewSummaryDTO.setAssignmentTitle(assignment.getTitle());
-                peerReviewSummaryDTO.setCourseCode(courseCode);
+                peerReviewSummaryDTO.setCourseCode(courseInfo);
                 peerReviewSummaryDTO.setTotalReviews(totalReviews);
-                peerReviewSummaryDTO.setCompletedReviews(completedReviews);
+                peerReviewSummaryDTO.setCompletedReviews(completedReviewTasks);
                 peerReviewSummaryDTO.setProgressPercentage(progress);
                 peerReviewSummaryDTO.setTotalStudentCount(studentCount);
 
@@ -91,17 +119,19 @@ public class DashboardRepository {
 
     }
 
-    public CompletableFuture<List<Assignment>> getAssignmentSummaryForProfessor(Long userId, String filterByCourseCode) {
+    public CompletableFuture<List<Assignment>> getAssignmentSummaryForProfessor(Long userId, String filterByCourseCode, String courseSection, String term) {
         return CompletableFuture.supplyAsync(()->jpaApi.withTransaction(entityManager -> {
 
             String queryString;
             TypedQuery<Assignment> query;
 
-            if (filterByCourseCode != null) {
-                queryString = "SELECT a FROM Assignment a WHERE a.course.professor.userId = :userId AND a.course.courseCode = :courseCode";
+            if (filterByCourseCode != null && courseSection != null && term != null) {
+                queryString = "SELECT a FROM Assignment a WHERE a.course.professor.userId = :userId AND a.course.courseCode = :courseCode AND a.course.courseSection = :courseSection AND a.course.term = :term ";
                 query = entityManager.createQuery(queryString, Assignment.class)
                             .setParameter("userId", userId)
-                            .setParameter("courseCode", filterByCourseCode);
+                            .setParameter("courseCode", filterByCourseCode)
+                            .setParameter("courseSection", courseSection)
+                            .setParameter("term", term);
             }
             else {
                 queryString = "SELECT a FROM Assignment a WHERE a.course.professor.userId = :userId";
@@ -109,7 +139,121 @@ public class DashboardRepository {
                         .setParameter("userId", userId);
             }
 
-            return query.getResultList();
+            // Loop through each assignment and update the status value based on current data and fileUpload status and save the change as well to database
+            List<Assignment> assignments = query.getResultList();
+            for (Assignment assignment : assignments) {
+                LocalDate today = LocalDate.now();
+                LocalDate startDate = assignment.getStartDate();
+                LocalDate dueDate = assignment.getDueDate();
+                boolean fileUploaded = assignment.isPeerAssigned();
+
+                if (!fileUploaded) {
+                    assignment.setStatus(Status.PENDING);
+                } else if (today.isBefore(startDate)) {
+                    assignment.setStatus(Status.PENDING);
+                } else if (today.isAfter(dueDate)) {
+                    assignment.setStatus(Status.COMPLETED);
+                } else {
+                    assignment.setStatus(Status.ACTIVE);
+                }
+
+                entityManager.merge(assignment);
+            }
+
+            return assignments;
+        }), executor);
+    }
+
+    public CompletableFuture<List<Assignment>> getAssignmentsForStudent(Long userId, String courseCode) {
+        return CompletableFuture.supplyAsync(() -> jpaApi.withTransaction(entityManager -> {
+            if (courseCode == null || courseCode.equalsIgnoreCase("all")) {
+                // Fetch the enrolled course codes for student
+                TypedQuery<String> courseQuery = entityManager.createQuery(
+                        "SELECT e.course.courseCode FROM Enrollment e WHERE e.student.userId = :userId", String.class);
+                courseQuery.setParameter("userId", userId);
+                List<String> courseCodes = courseQuery.getResultList();
+
+                if (courseCodes.isEmpty()) return Collections.emptyList();
+
+                // Fetch assignments for course codes
+                TypedQuery<Assignment> assignmentQuery = entityManager.createQuery(
+                        "SELECT a FROM Assignment a WHERE a.course.courseCode IN :courseCodes AND a.startDate <= CURRENT_DATE",
+                        Assignment.class
+                );
+                assignmentQuery.setParameter("courseCodes", courseCodes);
+                return assignmentQuery.getResultList();
+            } else {
+                // Fetch assignments for a specific course
+                TypedQuery<Assignment> assignmentQuery = entityManager.createQuery(
+                        "SELECT a FROM Assignment a WHERE a.course.courseCode = :courseCode AND a.startDate <= CURRENT_DATE",
+                        Assignment.class
+                );
+                assignmentQuery.setParameter("courseCode", courseCode);
+                return assignmentQuery.getResultList();
+            }
+        }), executor);
+    }
+
+    public CompletableFuture<List<ReviewTaskDTO>> getPendingPeerReviewsForStudent(Long userId, String courseCode) {
+        return CompletableFuture.supplyAsync(() -> jpaApi.withTransaction(entityManager -> {
+
+            List<ReviewTask> reviewTasks;
+
+            if (courseCode == null || courseCode.equalsIgnoreCase("all")) {
+                // Fetch course codes the student is enrolled in
+                List<String> enrolledCourses = entityManager.createQuery(
+                                "SELECT e.course.courseCode FROM Enrollment e WHERE e.student.userId = :userId", String.class)
+                        .setParameter("userId", userId)
+                        .getResultList();
+
+                if (enrolledCourses.isEmpty()) {
+                    return Collections.emptyList();
+                }
+
+                reviewTasks = entityManager.createQuery(
+                                "SELECT rt FROM ReviewTask rt " +
+                                        "WHERE rt.reviewer.userId = :userId " +
+                                        "AND rt.status = models.enums.Status.PENDING " +
+                                        "AND rt.assignment.course.courseCode IN :courseCodes", ReviewTask.class)
+                        .setParameter("userId", userId)
+                        .setParameter("courseCodes", enrolledCourses)
+                        .getResultList();
+            } else {
+                // Specific course
+                reviewTasks = entityManager.createQuery(
+                                "SELECT rt FROM ReviewTask rt " +
+                                        "WHERE rt.reviewer.userId = :userId " +
+                                        "AND rt.status = models.enums.Status.PENDING " +
+                                        "AND rt.assignment.course.courseCode = :courseCode", ReviewTask.class)
+                        .setParameter("userId", userId)
+                        .setParameter("courseCode", courseCode)
+                        .getResultList();
+            }
+
+               return reviewTasks.stream()
+                    .map(rt ->{
+
+                        List<FeedbackDTO> feedbacks = rt.getFeedbacks()
+                                .stream()
+                                .map(feedback -> new FeedbackDTO(
+                                        feedback.getId(),
+                                        feedback.getScore(),
+                                        feedback.getQuestion().getMaxMarks(),
+                                        feedback.getQuestion().getQuestionText(),
+                                        feedback.getFeedbackText()
+                                ))
+                                .toList();
+
+                        return new ReviewTaskDTO(
+                                rt.getReviewTaskId(),
+                                rt.getAssignment().getAssignmentId(),
+                                rt.getAssignment().getDueDate(),
+                                rt.getAssignment().getCourse().getCourseCode(),
+                                rt.getAssignment().getTitle(),
+                                rt.getReviewee().getUserName(),
+                                rt.getStatus(),
+                                feedbacks);
+                    }).toList();
         }), executor);
     }
 }

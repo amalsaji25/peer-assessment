@@ -1,6 +1,6 @@
-@(request: play.mvc.Http.Request,adminName: String, adminRole: String)
+@(request: play.mvc.Http.Request, adminName: String, adminRole: String)
 
-@dashboard(request,"Admin Dashboard",adminName) {
+@dashboard(request, "Admin Dashboard", adminName) {
 
     <!-- Sidebar -->
     <nav id="sidebar">
@@ -12,14 +12,14 @@
                 <!-- User Info -->
             <div class="p-3 border-bottom">
                 <div class="d-flex align-items-center">
-                    <div class="user-avatar me-3">
-                        <span id="user-initials">
-                            NS
-                        </span>
-                    </div>
+                    @defining(adminName.split(" ").map(_.head.toUpper).mkString("")) { initials =>
+                        <div class="user-avatar me-3">
+                            <span id="user-initials">@initials</span>
+                        </div>
+                    }
                     <div>
-                        <h6 class="mb-0" id="user-name">Name</h6>
-                        <small class="text-muted" id="user-role">Admin</small>
+                        <h6 class="mb-0" id="user-name">@adminName</h6>
+                        <small class="text-muted" id="user-role">@adminRole</small>
                     </div>
                 </div>
             </div>
@@ -46,176 +46,268 @@
         </div>
     </nav>
 
-<div class="container-fluid px-4">
-    <!-- Welcome Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <h2 class="h4 mb-2">Welcome, @adminName</h2>
-                    <p class="text-muted mb-0">Use the tools below to manage system data</p>
+    <div class="container-fluid px-4">
+            <!-- Welcome Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 class="h4 mb-2">Welcome, @adminName</h2>
+                        <p class="text-muted mb-0">Use the tools below to manage system data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            <!-- Dropdown Rows -->
+        <div class="row mb-4">
+            <div class="col-12">
+                    <!-- First Row: Add Professor and Course Details -->
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-header bg-white py-3" id="addDetailsHeader">
+                        <div class="d-flex justify-content-between align-items-center" role="button" data-bs-toggle="collapse" data-bs-target="#addDetailsCollapse" aria-expanded="false" aria-controls="addDetailsCollapse">
+                            <h2 class="h5 mb-0">Add User and Course Details</h2>
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="collapse" id="addDetailsCollapse">
+                        <div class="card-body p-4">
+                            <div class="row g-4">
+                                    <!-- Add User Button -->
+                                <div class="col-md-6">
+                                    <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                                        <i class="bi bi-person-plus-fill me-2"></i>Add User
+                                    </button>
+                                </div>
+                                    <!-- Add Course Button -->
+                                <div class="col-md-6">
+                                    <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+                                        <i class="bi bi-book-fill me-2"></i>Add Course
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                    <!-- Second Row: Data Management via File Uploads -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3" id="dataManagementHeader">
+                        <div class="d-flex justify-content-between align-items-center" role="button" data-bs-toggle="collapse" data-bs-target="#dataManagementCollapse" aria-expanded="false" aria-controls="dataManagementCollapse">
+                            <h2 class="h5 mb-0">System Data Management via File Uploads</h2>
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="collapse" id="dataManagementCollapse">
+                        <div class="card-body p-4">
+                                <!-- File Upload Cards -->
+                            <div class="row g-4">
+                                    <!-- User File Upload -->
+                                <div class="col-12 col-md-4">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-header bg-white py-3">
+                                            <h2 class="h5 mb-0">User Management</h2>
+                                        </div>
+                                        <div class="card-body p-4">
+                                            <div class="text-center mb-3">
+                                                <div class="rounded-circle p-3 bg-primary bg-opacity-10 d-inline-flex mb-3">
+                                                    <i class="bi bi-people-fill text-primary fs-1"></i>
+                                                </div>
+                                                <h3 class="h6">Upload User Data</h3>
+                                                <p class="text-muted small mb-3">Import users from CSV or Excel file</p>
+                                            </div>
+
+                                            <form class="uploadForm" action="@routes.FileUploadController.uploadFile().url" enctype="multipart/form-data">
+                                                @helper.CSRF.formField(request.asScala())
+                                                <div class="mb-3">
+                                                    <label for="userFile" class="form-label">Select File</label>
+                                                    <input class="form-control" type="file" id="userFile" name="file" accept=".csv,.xlsx,.xls">
+                                                    <div class="form-text">Supported formats: CSV, Excel</div>
+                                                </div>
+                                                <input type="hidden" name="fileType" value="users">
+                                                <div class="d-grid">
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="bi bi-upload me-2"></i>Upload Users
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                    <!-- Course File Upload -->
+                                <div class="col-12 col-md-4">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-header bg-white py-3">
+                                            <h2 class="h5 mb-0">Course Management</h2>
+                                        </div>
+                                        <div class="card-body p-4">
+                                            <div class="text-center mb-3">
+                                                <div class="rounded-circle p-3 bg-primary bg-opacity-10 d-inline-flex mb-3">
+                                                    <i class="bi bi-book-fill text-primary fs-1"></i>
+                                                </div>
+                                                <h3 class="h6">Upload Course Data</h3>
+                                                <p class="text-muted small mb-3">Import courses from CSV or Excel file</p>
+                                            </div>
+
+                                            <form class="uploadForm" action="@routes.FileUploadController.uploadFile().url" enctype="multipart/form-data">
+                                                @helper.CSRF.formField(request.asScala())
+                                                <div class="mb-3">
+                                                    <label for="courseFile" class="form-label">Select File</label>
+                                                    <input class="form-control" type="file" id="courseFile" name="file" accept=".csv,.xlsx,.xls">
+                                                    <div class="form-text">Supported formats: CSV, Excel</div>
+                                                </div>
+                                                <input type="hidden" name="fileType" value="courses">
+                                                <div class="d-grid">
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="bi bi-upload me-2"></i>Upload Courses
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                    <!-- Enrollment File Upload -->
+                                <div class="col-12 col-md-4">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-header bg-white py-3">
+                                            <h2 class="h5 mb-0">Enrollment Management</h2>
+                                        </div>
+                                        <div class="card-body p-4">
+                                            <div class="text-center mb-3">
+                                                <div class="rounded-circle p-3 bg-primary bg-opacity-10 d-inline-flex mb-3">
+                                                    <i class="bi bi-person-plus-fill text-primary fs-1"></i>
+                                                </div>
+                                                <h3 class="h6">Upload Enrollment Data</h3>
+                                                <p class="text-muted small mb-3">Import enrollments from CSV or Excel file</p>
+                                            </div>
+
+                                            <form class="uploadForm" action="@routes.FileUploadController.uploadFile().url" enctype="multipart/form-data">
+                                                @helper.CSRF.formField(request.asScala())
+                                                <div class="mb-3">
+                                                    <label for="enrollmentFile" class="form-label">Select File</label>
+                                                    <input class="form-control" type="file" id="enrollmentFile" name="file" accept=".csv,.xlsx,.xls">
+                                                    <div class="form-text">Supported formats: CSV, Excel</div>
+                                                </div>
+                                                <input type="hidden" name="fileType" value="enrollments">
+                                                <div class="d-grid">
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="bi bi-upload me-2"></i>Upload Enrollments
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- File Upload Cards -->
-    <div class="row g-4">
-        <!-- User File Upload -->
-        <div class="col-12 col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white py-3">
-                    <h2 class="h5 mb-0">User Management</h2>
+        <!-- Add User Modal -->
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addUserModalLabel">Add User Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="card-body p-4">
-                    <div class="text-center mb-3">
-                        <div class="rounded-circle p-3 bg-primary bg-opacity-10 d-inline-flex mb-3">
-                            <i class="bi bi-people-fill text-primary fs-1"></i>
-                        </div>
-                        <h3 class="h6">Upload User Data</h3>
-                        <p class="text-muted small mb-3">Import users from CSV or Excel file</p>
-                    </div>
-
-                    <form class="uploadForm" action="@routes.FileUploadController.uploadFile().url"  enctype="multipart/form-data">
+                <div class="modal-body">
+                    <form id="addUserForm">
                         @helper.CSRF.formField(request.asScala())
-                        <div class="mb-3">
-                            <label for="userFile" class="form-label">Select File</label>
-                            <input class="form-control" type="file" id="userFile" name="file" accept=".csv,.xlsx,.xls">
-                            <div class="form-text">Supported formats: CSV, Excel</div>
-                        </div>
-                        <input type="hidden" name="fileType" value="users">
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-upload me-2"></i>Upload Users
-                            </button>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="userId" class="form-label">User ID</label>
+                                <input type="text" class="form-control" id="userId" name="user_id" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="firstName" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="firstName" name="first_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="lastName" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="lastName" name="last_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="role" class="form-label">Role</label>
+                                <select class="form-select" id="role" name="role" required>
+                                    <option value="">Select a role</option>
+                                    <option value="professor">Professor</option>
+                                    <option value="student">Student</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
                         </div>
                     </form>
                 </div>
-            </div>
-        </div>
-
-        <!-- Course File Upload -->
-        <div class="col-12 col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white py-3">
-                    <h2 class="h5 mb-0">Course Management</h2>
-                </div>
-                <div class="card-body p-4">
-                    <div class="text-center mb-3">
-                        <div class="rounded-circle p-3 bg-primary bg-opacity-10 d-inline-flex mb-3">
-                            <i class="bi bi-book-fill text-primary fs-1"></i>
-                        </div>
-                        <h3 class="h6">Upload Course Data</h3>
-                        <p class="text-muted small mb-3">Import courses from CSV or Excel file</p>
-                    </div>
-
-                    <form class="uploadForm" action="@routes.FileUploadController.uploadFile().url"  enctype="multipart/form-data">
-                        @helper.CSRF.formField(request.asScala())
-                        <div class="mb-3">
-                            <label for="courseFile" class="form-label">Select File</label>
-                            <input class="form-control" type="file" id="courseFile" name="file" accept=".csv,.xlsx,.xls">
-                            <div class="form-text">Supported formats: CSV, Excel</div>
-                        </div>
-                        <input type="hidden" name="fileType" value="courses">
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-upload me-2"></i>Upload Courses
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Enrollment File Upload -->
-        <div class="col-12 col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white py-3">
-                    <h2 class="h5 mb-0">Enrollment Management</h2>
-                </div>
-                <div class="card-body p-4">
-                    <div class="text-center mb-3">
-                        <div class="rounded-circle p-3 bg-primary bg-opacity-10 d-inline-flex mb-3">
-                            <i class="bi bi-person-plus-fill text-primary fs-1"></i>
-                        </div>
-                        <h3 class="h6">Upload Enrollment Data</h3>
-                        <p class="text-muted small mb-3">Import enrollments from CSV or Excel file</p>
-                    </div>
-
-                    <form class="uploadForm" action="@routes.FileUploadController.uploadFile().url"  enctype="multipart/form-data">
-                        @helper.CSRF.formField(request.asScala())
-                        <div class="mb-3">
-                            <label for="enrollmentFile" class="form-label">Select File</label>
-                            <input class="form-control" type="file" id="enrollmentFile" name="file" accept=".csv,.xlsx,.xls">
-                            <div class="form-text">Supported formats: CSV, Excel</div>
-                        </div>
-                        <input type="hidden" name="fileType" value="enrollments">
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-upload me-2"></i>Upload Enrollments
-                            </button>
-                        </div>
-                    </form>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveUserBtn">Create</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Recent Uploads -->
-@*    <div class="row mt-4 mb-4">*@
-@*        <div class="col-12">*@
-@*            <div class="card border-0 shadow-sm">*@
-@*                <div class="card-header bg-white py-3">*@
-@*                    <h2 class="h5 mb-0">Recent Uploads</h2>*@
-@*                </div>*@
-@*                <div class="card-body p-3">*@
-@*                    <div class="table-responsive">*@
-@*                        <table class="table table-hover">*@
-@*                            <thead>*@
-@*                            <tr>*@
-@*                                <th>File Name</th>*@
-@*                                <th>Type</th>*@
-@*                                <th>Date</th>*@
-@*                                <th>Status</th>*@
-@*                                <th>Actions</th>*@
-@*                            </tr>*@
-@*                            </thead>*@
-@*                            <tbody>*@
-@*                            <tr>*@
-@*                                <td>users_spring2025.csv</td>*@
-@*                                <td>Users</td>*@
-@*                                <td>May 10, 2025</td>*@
-@*                                <td><span class="badge bg-success">Completed</span></td>*@
-@*                                <td>*@
-@*                                    <button class="btn btn-sm btn-outline-secondary">View Log</button>*@
-@*                                </td>*@
-@*                            </tr>*@
-@*                            <tr>*@
-@*                                <td>courses_spring2025.xlsx</td>*@
-@*                                <td>Courses</td>*@
-@*                                <td>May 9, 2025</td>*@
-@*                                <td><span class="badge bg-success">Completed</span></td>*@
-@*                                <td>*@
-@*                                    <button class="btn btn-sm btn-outline-secondary">View Log</button>*@
-@*                                </td>*@
-@*                            </tr>*@
-@*                            <tr>*@
-@*                                <td>enrollments_cs101.csv</td>*@
-@*                                <td>Enrollments</td>*@
-@*                                <td>May 8, 2025</td>*@
-@*                                <td><span class="badge bg-warning text-dark">Partial</span></td>*@
-@*                                <td>*@
-@*                                    <button class="btn btn-sm btn-outline-secondary">View Log</button>*@
-@*                                </td>*@
-@*                            </tr>*@
-@*                            </tbody>*@
-@*                        </table>*@
-@*                    </div>*@
-@*                </div>*@
-@*            </div>*@
-@*        </div>*@
-@*    </div>*@
-</div>
+        <!-- Add Course Modal -->
+    <div class="modal fade" id="addCourseModal" tabindex="-1" aria-labelledby="addCourseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addCourseModalLabel">Add Course</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addCourseForm">
+                        @helper.CSRF.formField(request.asScala())
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="courseCode" class="form-label">Course Code</label>
+                                <input type="text" class="form-control" id="courseCode" name="course_code" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="courseSection" class="form-label">Course Section</label>
+                                <input type="text" class="form-control" id="courseSection" name="course_section" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="courseName" class="form-label">Course Name</label>
+                                <input type="text" class="form-control" id="courseName" name="course_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="term" class="form-label">Term</label>
+                                <select class="form-select" id="term" name="term" required>
+                                <!-- Option to be populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="professorId" class="form-label">Professor ID</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="professorId" name="professor_id" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="searchProfessorBtn">Search</button>
+                                </div>
+                            </div>
+                            <div class="col-12" id="professorInfoContainer" style="display: none;">
+                                <div class="alert alert-info">
+                                    <div id="professorInfo"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveCourseBtn">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <script src="@routes.Assets.versioned("javascripts/fileUpload.js")" defer></script>
+    <script src="@routes.Assets.versioned("javascripts/adminDashboard.js")" defer></script>
 }

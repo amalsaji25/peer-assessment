@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -30,18 +29,20 @@ public class AssignmentRepository {
     }
 
 
-    public CompletableFuture<Integer> findAssignmentCountByProfessorId(Long userId, String courseCode) {
+    public CompletableFuture<Integer> findAssignmentCountByProfessorId(Long userId, String courseCode, String courseSection, String term) {
         return CompletableFuture.supplyAsync(() -> jpaApi.withTransaction(entityManager -> {
 
             String queryString;
             TypedQuery<Long> query;
 
-            if (courseCode != null) {
+            if (courseCode != null && courseSection != null && term != null) {
                 queryString = "SELECT COUNT(a) FROM Assignment a "+
-                              "WHERE a.course.professor.id = :userId AND a.course.courseCode = :courseCode";
+                              "WHERE a.course.professor.id = :userId AND a.course.courseCode = :courseCode AND a.course.courseSection = :courseSection AND a.course.term = :term";
                 query = entityManager.createQuery(queryString, Long.class)
                         .setParameter("userId", userId)
-                        .setParameter("courseCode", courseCode);
+                        .setParameter("courseCode", courseCode)
+                        .setParameter("courseSection", courseSection)
+                        .setParameter("term", term);
             }
             else{
                 queryString = "SELECT COUNT(a) FROM Assignment a " +
@@ -64,10 +65,9 @@ public class AssignmentRepository {
     }
 
     public void update(Assignment assignment) {
-        CompletableFuture.runAsync(() ->
-                jpaApi.withTransaction(entityManager -> {
+        jpaApi.withTransaction(entityManager -> {
                     entityManager.merge(assignment);
-                }), executorService);
+                });
     }
 
     public Optional<Assignment> findByIdWithFeedbackQuestions(Long assignmentId) {
@@ -92,15 +92,17 @@ public class AssignmentRepository {
         }
     }
 
-    public CompletableFuture<List<Map<String,Object>>> findAssignmentsByCourseId(String courseCode) {
+    public CompletableFuture<List<Map<String,Object>>> findAssignmentsByCourse(String courseCode, String courseSection, String term) {
         try{
             return CompletableFuture.supplyAsync(() ->
                     jpaApi.withTransaction(entityManager -> {
                         TypedQuery<Object[]> query = entityManager.createQuery(
-                                "SELECT a.assignmentId, a.title FROM Assignment a WHERE a.course.courseCode = :courseId",
+                                "SELECT a.assignmentId, a.title FROM Assignment a WHERE a.course.courseCode = :courseId AND a.course.courseSection = :courseSection AND a.course.term = :term",
                                 Object[].class
                         );
-                        query.setParameter("courseId", courseCode);
+                        query.setParameter("courseId", courseCode)
+                                .setParameter("courseSection", courseSection)
+                                .setParameter("term", term);
                         return query.getResultList().stream()
                                 .map(result -> Map.of(
                                         "assignmentId", result[0],
@@ -109,7 +111,7 @@ public class AssignmentRepository {
                                 .toList();
                     }), executorService);
         } catch (Exception e) {
-            log.error("findAssignmentsByCourseId failed for course {} with exception: {}", courseCode, e.getMessage());
+            log.error("findAssignmentsByCourse failed for course {} with exception: {}", courseCode, e.getMessage());
             return CompletableFuture.completedFuture(List.of());
         }
     }
@@ -171,5 +173,18 @@ public class AssignmentRepository {
             log.error("findById failed for assignment {} with exception: {}", assignmentId, e.getMessage());
             return Optional.empty();
         }
+    }
+
+    public CompletableFuture<Integer> findAssignmentCountByCourseCodes(List<String> courseCodes) {
+        return CompletableFuture.supplyAsync(
+                () -> jpaApi.withTransaction(entityManager -> {
+                    TypedQuery<Long> query = entityManager.createQuery(
+                            "SELECT COUNT(a) FROM Assignment a WHERE a.course.courseCode IN :courseCodes",
+                            Long.class
+                    );
+                    query.setParameter("courseCodes", courseCodes);
+                    return query.getSingleResult().intValue();
+                }), executorService
+        );
     }
 }

@@ -1,5 +1,6 @@
 package controllers;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import forms.LoginForm;
 import models.User;
 import org.slf4j.Logger;
@@ -34,6 +35,49 @@ public class AuthController {
         this.authenticationService = authenticationService;
         this.csrfTokenProvider = csrfTokenProvider;
         this.csrfConfig = csrfConfig;
+    }
+
+    public Result validateUser(Http.Request request) {
+        JsonNode json = request.body().asJson();
+        if (json == null) {
+            return badRequest(Json.toJson(Collections.singletonMap("error", "Invalid JSON request")));
+        }
+        Long userId;
+        try{
+            userId = json.get("userId").asLong();
+        }catch (Exception e){
+            return badRequest(Json.toJson(Collections.singletonMap("error", "Invalid userId")));
+        }
+
+        if(!authenticationService.isUserIdValid(userId)){
+           return ok(Json.toJson(Collections.singletonMap("Invalid user", false)));
+        }
+
+        boolean isFirstTimeLogin = authenticationService.isFirstTimeLogin(userId);
+
+        return ok(Json.newObject()
+                .put("userExists", true)
+                .put("firstTimeUser", isFirstTimeLogin));
+    }
+
+    public Result createPassword(Http.Request request){
+        JsonNode json = request.body().asJson();
+        if(json == null || !json.has("userId") || !json.has("password")){
+            return badRequest(Json.toJson(Collections.singletonMap("error", "Invalid JSON request - Missing userId or password")));
+        }
+
+        Long userId = json.get("userId").asLong();
+        String password = json.get("password").asText();
+
+        if(!authenticationService.isUserIdValid(userId)){
+            return ok(Json.toJson(Collections.singletonMap("Invalid user", false)));
+        }
+
+        boolean setPassword = authenticationService.setPassword(userId, password);
+        if(!setPassword){
+            return badRequest(Json.toJson(Collections.singletonMap("error", "Failed to set password")));
+        }
+        return ok(Json.toJson(Collections.singletonMap("Password created", true)));
     }
 
     public Result login(Http.Request request)

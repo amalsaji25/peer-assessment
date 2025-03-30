@@ -1,6 +1,7 @@
 package repository.core;
 
 import models.User;
+import models.dto.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import play.db.jpa.JPAApi;
@@ -47,7 +48,8 @@ public class UserRepository implements Repository<User> {
     }
 
     @Override
-    public CompletionStage<Map<String, Object>> saveAll(List<User> users) {
+    public CompletionStage<Map<String, Object>> saveAll(List<User> users, Context context) {
+        log.info("Starting bulk save of users with size: {}", users.size());
         int batchSize = 100;
 
         // Split into batches
@@ -106,7 +108,41 @@ public class UserRepository implements Repository<User> {
                     finalResponse.put("successCount", totalSuccess);
                     finalResponse.put("failedCount", totalFailed);
                     finalResponse.put("failedRecords", allFailedRecords);
+                    log.info("Bulk save completed for users. Success: {}, Failed: {}", totalSuccess, totalFailed);
                     return finalResponse;
                 });
+    }
+
+    public void updateUserPassword(User userId) {
+        jpaApi.withTransaction(entityManager -> {
+            try {
+                User user = entityManager.find(User.class, userId.getUserId());
+                if (user != null) {
+                    user.setPassword(userId.getPassword());
+                    entityManager.merge(user);
+                    log.info("User password updated successfully for user ID: {}", userId.getUserId());
+                } else {
+                    log.warn("User with ID {} not found for password update", userId.getUserId());
+                }
+            } catch (Exception e) {
+                log.error("Failed to update password for user ID {} - {}", userId.getUserId(), e.getMessage());
+            }
+        });
+    }
+
+    public List<User> findAllByUserIds(List<Long> list) {
+        return jpaApi.withTransaction(entityManager -> {
+            List<User> users = entityManager.createQuery("SELECT u FROM User u WHERE u.userId IN :userIds", User.class)
+                    .setParameter("userIds", list)
+                    .getResultList();
+            if(!users.isEmpty()){
+                log.info("Users with ids {} found", list);
+                return users;
+            }
+            else{
+                log.info("Users with ids {} not found", list);
+                return Collections.emptyList();
+            }
+        });
     }
 }

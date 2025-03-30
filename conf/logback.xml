@@ -1,44 +1,39 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE configuration>
-
 <configuration>
-  <import class="ch.qos.logback.classic.encoder.PatternLayoutEncoder"/>
-  <import class="ch.qos.logback.classic.AsyncAppender"/>
-  <import class="ch.qos.logback.core.FileAppender"/>
-  <import class="ch.qos.logback.core.ConsoleAppender"/>
 
-  <!-- Write logs to a file -->
-  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-    <file>logs/application.log</file>  <!-- Ensure correct log file path -->
-    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-      <charset>UTF-8</charset>
-      <pattern>%d{yyyy-MM-dd HH:mm:ss} %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
-    </encoder>
-  </appender>
-
-  <!-- Print logs to the console -->
+  <!-- Encoders -->
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-      <charset>UTF-8</charset>
-      <pattern>%d{yyyy-MM-dd HH:mm:ss} %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
+    <encoder>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%logger{36}] - %msg%n</pattern>
     </encoder>
   </appender>
 
-  <!-- Enable Async Logging -->
-  <appender name="ASYNCFILE" class="ch.qos.logback.classic.AsyncAppender">
-    <appender-ref ref="FILE"/>
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>logs/application.log</file>
+    <encoder>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%logger{36}] - %msg%n</pattern>
+    </encoder>
   </appender>
 
-  <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
+  <!-- Hibernate: Turn Off SQL Logging -->
+  <logger name="org.hibernate.SQL" level="OFF"/>
+  <logger name="org.hibernate.orm.jdbc.bind" level="OFF"/>
+  <logger name="org.hibernate.type.descriptor.sql" level="OFF"/>
+  <logger name="org.hibernate.loader" level="WARN"/>
+  <logger name="org.hibernate.engine" level="WARN"/>
+  <logger name="org.hibernate.event" level="WARN"/>
+  <logger name="org.hibernate.internal.util" level="WARN"/>
+
+  <!-- Pekko (Akka) -->
+  <logger name="org.apache.pekko" level="WARN"/>
+
+  <!-- Hikari connection pool noise -->
+  <logger name="com.zaxxer.hikari" level="WARN"/>
+
+  <!-- Default Log Level -->
+  <root level="INFO">
     <appender-ref ref="STDOUT"/>
-  </appender>
-
-  <!-- Set log levels -->
-  <logger name="play" level="INFO"/>
-  <logger name="application" level="DEBUG"/>  <!-- Ensure application logs are shown -->
-
-  <root level="INFO">  <!-- Change to INFO instead of WARN -->
-    <appender-ref ref="ASYNCFILE"/>
-    <appender-ref ref="ASYNCSTDOUT"/>
+    <appender-ref ref="FILE"/>
   </root>
+
 </configuration>

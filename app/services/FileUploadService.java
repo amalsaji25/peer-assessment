@@ -8,21 +8,22 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import exceptions.InvalidFileUploadException;
+import models.dto.Context;
 import models.enums.FileType;
-import services.processors.FileProcessor;
-import services.processors.FileProcessorStrategy;
+import services.processors.Processor;
+import services.processors.ProcessorStrategy;
 
 @Singleton
 public class FileUploadService {
 
-  private final FileProcessorStrategy fileProcessorStrategy;
+  private final ProcessorStrategy processorStrategy;
 
   @Inject
-  public FileUploadService(FileProcessorStrategy fileProcessorStrategy) {
-    this.fileProcessorStrategy = fileProcessorStrategy;
+  public FileUploadService(ProcessorStrategy processorStrategy) {
+    this.processorStrategy = processorStrategy;
   }
 
-  public <T> CompletableFuture<FileProcessor<T>> getFileProcessor(File filePath, String fileType) {
+  public <T> CompletableFuture<Processor<T,Path>> getFileProcessor(File filePath, String fileType) {
     return CompletableFuture.supplyAsync(
         () -> {
           if (!isValidFile(filePath)) {
@@ -30,25 +31,25 @@ public class FileUploadService {
                 "Invalid file format. Only CSV files are allowed.");
           }
 
-          FileProcessor<T> fileProcessor = fileProcessorStrategy.getProcessor(fileType);
-          if (fileProcessor == null) {
+          Processor<T, Path> processor = processorStrategy.getFileProcessor(fileType);
+          if (processor == null) {
             throw new InvalidFileUploadException(
                 "Invalid fileType. Allowed: users, courses, enrollments.");
           }
 
-          return fileProcessor;
+          return processor;
         });
   }
 
   public <T> CompletableFuture<List<T>> parseAndProcessFile(
-      FileProcessor<T> fileProcessor, File file) {
+          Processor<T,Path> processor, File file, Context context) {
     Path filePath = file.toPath();
-    return fileProcessor.parseAndProcessFile(filePath);
+    return processor.processData(filePath, context);
   }
 
   public <T> CompletableFuture<String> saveProcessedFileData(
-      FileProcessor<T> fileProcessor, List<T> processedData) {
-    return fileProcessor.saveProcessedFileData(processedData);
+          Processor<T,Path> processor, List<T> processedData, Context context) {
+    return processor.saveProcessedData(processedData, context);
   }
 
   private boolean isValidFile(File file) {

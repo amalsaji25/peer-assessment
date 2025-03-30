@@ -9,6 +9,8 @@ public class AssignmentEditDTO {
     public String startDate;
     public String dueDate;
     public String description;
+    public String courseSection;
+    public String term;
     public List<ReviewQuestionDTO> reviewQuestions;
 
     public static class ReviewQuestionDTO {
@@ -71,5 +73,20 @@ public class AssignmentEditDTO {
 
     public void setReviewQuestions(List<ReviewQuestionDTO> reviewQuestions) {
         this.reviewQuestions = reviewQuestions;
+    }
+
+    public String getCourseSection() {
+        return courseSection;
+    }
+    public void setCourseSection(String courseSection) {
+        this.courseSection = courseSection;
+    }
+
+    public String getTerm() {
+        return term;
+    }
+
+    public void setTerm(String term) {
+        this.term = term;
     }
 }

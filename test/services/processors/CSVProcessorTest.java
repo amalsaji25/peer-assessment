@@ -4,6 +4,7 @@ import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
 
 import exceptions.InvalidCsvException;
+import models.dto.Context;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.*;
@@ -35,6 +36,8 @@ public class CSVProcessorTest {
 
     private Path mockFilePath;
 
+    private Context mockContext;
+
     @Before
     public void setUp() throws IOException {
         mockFilePath = Paths.get("mock-file.csv");
@@ -45,7 +48,7 @@ public class CSVProcessorTest {
         when(validations.validateFieldOrder(anyList())).thenReturn(true);
         when(validations.validateSyntax(any())).thenReturn(true);
         when(validations.validateSemantics(any(), any())).thenReturn(true);
-        when(entityMapper.mapToEntityList(any())).thenReturn(List.of(new Object()));
+        when(entityMapper.mapToEntityList(any(), eq(mockContext))).thenReturn(List.of(new Object()));
     }
 
     @After
@@ -55,7 +58,7 @@ public class CSVProcessorTest {
 
     @Test
     public void testParseAndProcessFile_ShouldReturnValidList() {
-        List<Object> result = csvProcessor.parseAndProcessFile(mockFilePath).join();
+        List<Object> result = csvProcessor.processData(mockFilePath, mockContext).join();
         assertFalse(result.isEmpty());
     }
 
@@ -65,7 +68,7 @@ public class CSVProcessorTest {
 
         CompletionException exception = assertThrows(
                 CompletionException.class,
-                () -> csvProcessor.parseAndProcessFile(mockFilePath).join()
+                () -> csvProcessor.processData(mockFilePath, mockContext).join()
         );
 
         assertTrue(exception.getCause() instanceof InvalidCsvException);
@@ -77,48 +80,48 @@ public class CSVProcessorTest {
         when(validations.validateSemantics(any(), any())).thenReturn(false);
         CompletionException exception = assertThrows(
                 CompletionException.class,
-                () -> csvProcessor.parseAndProcessFile(mockFilePath).join()
+                () -> csvProcessor.processData(mockFilePath, mockContext).join()
         );
 
         assertTrue(exception.getCause() instanceof InvalidCsvException);
-        assertEquals("No valid records found after semantic validation.", exception.getCause().getMessage());
+        assertEquals("No valid records found. Data might already exist.", exception.getCause().getMessage());
     }
 
     @Test
     public void testSaveProcessedFileData_ShouldReturnSuccessMessage() {
         List<Object> data = List.of(new Object());
-        when(repository.saveAll(data)).thenReturn(CompletableFuture.completedFuture(Map.of(
+        when(repository.saveAll(data, mockContext)).thenReturn(CompletableFuture.completedFuture(Map.of(
                 "successCount", 1,
                 "failedCount", 0,
                 "failedRecords", List.of()
         )));
 
-        String message = csvProcessor.saveProcessedFileData(data).join();
-        assertEquals("CSV uploaded and processed successfully.", message);
+        String message = csvProcessor.saveProcessedData(data, mockContext).join();
+        assertEquals("Upload completed successfully", message);
     }
 
     @Test
     public void testSaveProcessedFileData_ShouldReturnPartialSuccessMessage() {
         List<Object> data = List.of(new Object());
-        when(repository.saveAll(data)).thenReturn(CompletableFuture.completedFuture(Map.of(
+        when(repository.saveAll(data, mockContext)).thenReturn(CompletableFuture.completedFuture(Map.of(
                 "successCount", 1,
                 "failedCount", 1,
                 "failedRecords", List.of("record1")
         )));
 
-        String message = csvProcessor.saveProcessedFileData(data).join();
-        assertEquals("Partial success: 1 records saved, 1 failed.", message);
+        String message = csvProcessor.saveProcessedData(data, mockContext).join();
+        assertEquals("Upload completed: 1 new records added, 1 duplicate records skipped.", message);
     }
 
     @Test
     public void testSaveProcessedFileData_ShouldReturnErrorMessageOnException() {
         List<Object> data = List.of(new Object());
 
-        when(repository.saveAll(data))
+        when(repository.saveAll(data, mockContext))
                 .thenReturn(CompletableFuture.failedFuture(new RuntimeException("DB failure")));
 
-        String message = csvProcessor.saveProcessedFileData(data).join();
+        String message = csvProcessor.saveProcessedData(data, mockContext).join();
 
-        assertEquals("Failed to process CSV file.", message);
+        assertEquals("An error occurred while saving the records.", message);
     }
 }

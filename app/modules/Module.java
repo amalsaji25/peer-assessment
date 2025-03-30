@@ -21,8 +21,12 @@ import services.export.ExcelExportServiceImpl;
 import services.export.ExportService;
 import services.mappers.*;
 import services.processors.CSVProcessor;
-import services.processors.FileProcessor;
+import services.processors.FormProcessor;
+import services.processors.Processor;
+import services.processors.record.InputRecord;
 import services.validations.*;
+
+import java.nio.file.Path;
 
 public class Module extends AbstractModule {
 
@@ -70,7 +74,7 @@ public class Module extends AbstractModule {
     @Provides
     @Singleton
     @Named("users")
-    public FileProcessor<User> provideUsersCSVProcessor(
+    public Processor<User, Path> provideUsersCSVProcessor(
             Validations<User> userValidation, // Injected based on the generic type
             EntityMapper<User> userEntityMapper, // Injected based on the generic type
             UserRepository userRepository) {
@@ -80,7 +84,7 @@ public class Module extends AbstractModule {
     @Provides
     @Singleton
     @Named("courses")
-    public FileProcessor<Course> provideCoursesCSVProcessor(
+    public Processor<Course,Path> provideCoursesCSVProcessor(
             Validations<Course> courseValidation, // Injected based on the generic type
             EntityMapper<Course> courseEntityMapper, // Injected based on the generic type
             CourseRepository courseRepository) {
@@ -90,7 +94,7 @@ public class Module extends AbstractModule {
     @Provides
     @Singleton
     @Named("enrollments")
-    public FileProcessor<Enrollment> provideEnrollmentsCSVProcessor(
+    public Processor<Enrollment, Path> provideEnrollmentsCSVProcessor(
             Validations<Enrollment> enrollmentValidation, // Injected based on the generic type
             EntityMapper<Enrollment> enrollmentEntityMapper, // Injected based on the generic type
             EnrollmentRepository enrollmentRepository) {
@@ -100,10 +104,32 @@ public class Module extends AbstractModule {
     @Provides
     @Singleton
     @Named("review_tasks")
-    public FileProcessor<ReviewTask> provideReviewTasksCSVProcessor(
+    public Processor<ReviewTask, Path> provideReviewTasksCSVProcessor(
             Validations<ReviewTask> reviewTaskValidation, // Injected based on the generic type
             EntityMapper<ReviewTask> reviewTaskEntityMapper, // Injected based on the generic type
             ReviewTaskRepository reviewTaskRepository) {
         return new CSVProcessor<>(reviewTaskValidation, reviewTaskEntityMapper, reviewTaskRepository);
+    }
+
+    @Provides
+    @Singleton
+    @Named("userForm")
+    public Processor<User, InputRecord> provideUsersFormProcessor(
+            Validations<User> userValidation,
+            EntityMapper<User> userEntityMapper,
+            UserRepository userRepository) {
+
+        return new FormProcessor<>(userValidation, userEntityMapper, userRepository);
+    }
+
+    @Provides
+    @Singleton
+    @Named("courseForm")
+    public Processor<Course, InputRecord> provideCoursesFormProcessor(
+            Validations<Course> courseValidation,
+            EntityMapper<Course> courseEntityMapper,
+            CourseRepository courseRepository) {
+
+        return new FormProcessor<>(courseValidation, courseEntityMapper, courseRepository);
     }
 }

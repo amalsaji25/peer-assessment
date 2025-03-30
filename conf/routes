@@ -3,15 +3,23 @@
 
 # Authentication Routes
 GET     /                           controllers.AuthController.login(request: play.mvc.Http.Request)
+POST    /user-validation            controllers.AuthController.validateUser(request: play.mvc.Http.Request)
+POST    /create-password            controllers.AuthController.createPassword(request: play.mvc.Http.Request)
 POST    /login                      controllers.AuthController.authenticate(request: play.mvc.Http.Request)
 GET     /logout                     controllers.AuthController.logout(request: play.mvc.Http.Request)
 
 # Role Based Routes (Protected)
 GET     /dashboard                  controllers.DashboardController.dashboard(request: play.mvc.Http.Request)
 
-GET     /api/courses                controllers.CoreServiceController.getAllCourses(request: play.mvc.Http.Request)
+GET     /api/courses/:term                controllers.CoreServiceController.getAllCourses(term: String, request: play.mvc.Http.Request)
+
+GET     /api/terms                  controllers.CoreServiceController.getAllTerms(request: play.mvc.Http.Request)
 
 POST    /uploadFile                 controllers.FileUploadController.uploadFile(request: play.mvc.Http.Request)
+
+POST    /api/create-user                controllers.FormsController.createUser(request: play.mvc.Http.Request)
+
+POST    /api/create-course              controllers.FormsController.createCourse(request: play.mvc.Http.Request)
 
 POST    /api/assignments/create      controllers.FormsController.createAssignment(request: play.mvc.Http.Request)
 
@@ -28,6 +36,12 @@ DELETE  /api/assignments/delete/:assignmentId  controllers.CoreServiceController
 GET    /api/download/report/:courseCode/:assignmentId     controllers.FileExportController.downloadExcelReport(courseCode: String, assignmentId: Long, request: play.mvc.Http.Request)
 
 POST   /api/download/studentFeedback      controllers.FileExportController.downloadStudentFeedbackReport(request: Request)
+
+GET    /api/student/courses       controllers.CoreServiceController.getStudentEnrolledCourses(request: play.mvc.Http.Request)
+
+POST   /api/review-tasks/save-submit/:reviewTaskId   controllers.FormsController.saveOrSubmitReviewTask(reviewTaskId: Long, request: play.mvc.Http.Request)
+
+GET    /api/professor/validate/:professorId          controllers.CoreServiceController.validateProfessor(professorId: Long, request: play.mvc.Http.Request)
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
-

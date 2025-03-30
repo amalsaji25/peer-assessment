@@ -1,11 +1,12 @@
 package services.mappers;
 
 import models.User;
-import org.apache.commons.csv.CSVRecord;
+import models.dto.Context;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import services.processors.record.InputRecord;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -15,7 +16,10 @@ public class UserEntityMapperTest {
     private UserEntityMapper userEntityMapper;
 
     @Mock
-    private CSVRecord csvRecord;
+    private InputRecord csvRecord;
+
+    @Mock
+    private Context context;
 
     @Before
     public void setUp() {
@@ -35,7 +39,7 @@ public class UserEntityMapperTest {
         when(csvRecord.get("last_name")).thenReturn("Doe");
         when(csvRecord.get("role")).thenReturn("student");
 
-        User user = userEntityMapper.mapToEntity(csvRecord);
+        User user = userEntityMapper.mapToEntity(csvRecord, context);
 
         assertNotNull(user);
         assertEquals(Long.valueOf(123L), user.getUserId());
@@ -56,7 +60,7 @@ public class UserEntityMapperTest {
         when(csvRecord.get("last_name")).thenReturn("Doe");
         when(csvRecord.get("role")).thenReturn("professor");
 
-        User user = userEntityMapper.mapToEntity(csvRecord);
+        User user = userEntityMapper.mapToEntity(csvRecord, context);
 
         assertNotNull(user);
         assertEquals(Long.valueOf(123L), user.getUserId());
@@ -76,7 +80,7 @@ public class UserEntityMapperTest {
         when(csvRecord.get("last_name")).thenReturn("");
         when(csvRecord.get("role")).thenReturn("");
 
-        User user = userEntityMapper.mapToEntity(csvRecord);
+        User user = userEntityMapper.mapToEntity(csvRecord,context );
 
         assertNotNull(user);
         assertEquals(Long.valueOf(0L), user.getUserId());

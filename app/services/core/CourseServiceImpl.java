@@ -17,12 +17,17 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public CompletableFuture<Integer> getActiveCoursesByProfessorId(Long userId, String courseCode) {
-        return courseRepository.findActiveCoursesByProfessorId(userId, courseCode);
+    public CompletableFuture<Integer> getActiveCoursesByProfessorId(Long userId, String courseCode, String courseSection, String term) {
+        return courseRepository.findActiveCoursesByProfessorId(userId, courseCode, courseSection, term );
     }
 
     @Override
-    public CompletableFuture<List<Map<String, String>>> getAllCourses(Long userId) {
-        return courseRepository.findAllCourses(userId);
+    public CompletableFuture<List<Map<String, String>>> getAllCourses(Long userId, String term) {
+        return courseRepository.findAllCourses(userId, term);
+    }
+
+    @Override
+    public CompletableFuture<List<String>> getAllTerms(Long userId) {
+        return courseRepository.findAllTerms(userId);
     }
 }

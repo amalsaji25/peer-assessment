@@ -1,16 +1,16 @@
 package services.mappers;
 
-import org.apache.commons.csv.CSVRecord;
+import models.dto.Context;
+import services.processors.record.InputRecord;
 
-import javax.inject.Singleton;
 import java.util.List;
 
 
 public interface EntityMapper <T>{
 
-    default List<T> mapToEntityList(CSVRecord record){
-        return List.of(mapToEntity(record));
+    default List<T> mapToEntityList(InputRecord record, Context context){
+        return List.of(mapToEntity(record, context));
     }
 
-    T mapToEntity(CSVRecord record);
+    T mapToEntity(InputRecord record, Context context);
 }

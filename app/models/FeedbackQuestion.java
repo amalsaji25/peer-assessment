@@ -2,9 +2,16 @@ package models;
 
 
 import jakarta.persistence.*;
-
 import java.io.Serializable;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
+/**
+ * FeedbackQuestion is an entity class that represents a feedback question in the system. It
+ * contains fields for the question's ID, the assignment it belongs to, the question text, and the
+ * maximum marks for the question. The class also includes methods for getting and setting these
+ * fields.
+ */
 @Entity
 @Table(name = "feedback_questions")
 public class FeedbackQuestion implements Serializable {
@@ -15,6 +22,7 @@ public class FeedbackQuestion implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "assignment_id", referencedColumnName = "assignment_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Assignment assignment;  // Assignment this question belongs to
 
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -36,6 +44,10 @@ public class FeedbackQuestion implements Serializable {
         return assignment;
     }
 
+    public void setAssignment(Assignment assignment) {
+        this.assignment = assignment;
+    }
+
     public Long getQuestionId() {
         return questionId;
     }
@@ -44,18 +56,17 @@ public class FeedbackQuestion implements Serializable {
         return questionText;
     }
 
-    public int getMaxMarks() {return maxMarks;}
-
-    public void setAssignment(Assignment assignment) {
-        this.assignment = assignment;
-    }
-
     public void setQuestionText(String questionText) {
         this.questionText = questionText;
     }
+
+    public int getMaxMarks() {return maxMarks;}
 
     public void setMaxMarks(int maxMarks) {
         this.maxMarks = maxMarks;
     }
 
+    public void setQuestionId(long questionId) {
+        this.questionId = questionId;
+    }
 }

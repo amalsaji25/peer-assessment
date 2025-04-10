@@ -1,4 +1,4 @@
-package repository;
+package repository.core;
 
 import jakarta.persistence.TypedQuery;
 import models.Course;
@@ -11,7 +11,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import play.db.jpa.JPAApi;
 
 import jakarta.persistence.EntityManager;
-import repository.core.CourseRepository;
 
 import java.util.*;
 
@@ -82,7 +81,7 @@ public class CourseRepositoryTest {
         assertFalse(result.isPresent());
     }
 
-    /** Test that saveAll correctly batches and reports success/failures **/
+    /** Test that saveAll correctly batches and detailedAssignmentReport success/failures **/
     @Test
     public void testSaveAllShouldReturnCorrectSuccessAndFailureCounts() {
         List<Course> cours = Arrays.asList(

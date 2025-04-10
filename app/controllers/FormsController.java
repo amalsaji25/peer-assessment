@@ -4,6 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.inject.Inject;
 import forms.AssignmentForm;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import javax.inject.Singleton;
 import models.User;
 import models.dto.Context;
 import models.enums.Roles;
@@ -21,22 +28,20 @@ import services.processors.ProcessorStrategy;
 import services.processors.record.FormInputRecord;
 import services.processors.record.InputRecord;
 
-import javax.inject.Singleton;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
+/**
+ * Controller for handling forms related to assignments, courses, and users.
+ * This includes creating and updating assignments, processing review tasks,
+ * and creating users and courses.
+ */
 @Security.Authenticated(AuthenticationService.class)
 @Singleton
 public class FormsController extends Controller {
+    private static final Set<Roles> ALLOWED_ROLES = Set.of(Roles.PROFESSOR);
+    private static final Logger log = LoggerFactory.getLogger(FormsController.class);
     private final AssignmentService assignmentService;
     private final ReviewTaskService reviewTaskService;
     private final ProcessorStrategy processorStrategy;
-    private static final Set<Roles> ALLOWED_ROLES = Set.of(Roles.PROFESSOR);
     private final AuthorizationService authorizationService;
-    private static final Logger log = LoggerFactory.getLogger(FormsController.class);
 
     @Inject
     public FormsController(AssignmentService assignmentService, AuthorizationService authorizationService, ReviewTaskService reviewTaskService,ProcessorStrategy processorStrategy) {
@@ -46,6 +51,12 @@ public class FormsController extends Controller {
         this.processorStrategy = processorStrategy;
     }
 
+    /**
+     * Handles the creation of an assignment.
+     *
+     * @param request The HTTP request containing the assignment data.
+     * @return A CompletionStage containing the Result of the creation operation.
+     */
     public CompletionStage<Result> createAssignment(Http.Request request) {
 
         if(!authorizationService.isAuthorized(request, ALLOWED_ROLES)){
@@ -73,6 +84,13 @@ public class FormsController extends Controller {
         });
     }
 
+    /**
+     * Handles the update of an assignment.
+     *
+     * @param assignmentId The ID of the assignment to be updated.
+     * @param request The HTTP request containing the updated assignment data.
+     * @return A CompletionStage containing the Result of the update operation.
+     */
     public CompletionStage<Result> updateAssignment(Long assignmentId, Http.Request request) {
 
         if(!authorizationService.isAuthorized(request, ALLOWED_ROLES)){
@@ -102,6 +120,12 @@ public class FormsController extends Controller {
                 });
     }
 
+    /**
+     * Extracts and validates the assignment form from the HTTP request.
+     *
+     * @param request The HTTP request containing the assignment form data.
+     * @return A CompletableFuture containing the validated AssignmentForm.
+     */
     private CompletableFuture<AssignmentForm> extractAndValidateAssignmentForm(Http.Request request) {
         if(!authorizationService.isAuthorized(request, ALLOWED_ROLES)){
             return CompletableFuture.failedFuture(new IllegalAccessException("Unauthorized access"));
@@ -125,6 +149,13 @@ public class FormsController extends Controller {
         return assignmentService.parseAssignmentForm(body);
     }
 
+    /**
+     * Handles the saving or submission of a review task.
+     *
+     * @param reviewTaskId The ID of the review task to be saved or submitted.
+     * @param request The HTTP request containing the review task data.
+     * @return A CompletionStage containing the Result of the save or submit operation.
+     */
     @BodyParser.Of(BodyParser.Json.class)
     public CompletionStage<Result> saveOrSubmitReviewTask(Long reviewTaskId, Http.Request request) {
         JsonNode json = request.body().asJson();
@@ -178,9 +209,15 @@ public class FormsController extends Controller {
     }
 
 
+    /**
+     * Handles the creation of a course.
+     *
+     * @param request The HTTP request containing the course data.
+     * @return A CompletionStage containing the Result of the creation operation.
+     */
     public CompletionStage<Result> createCourse(Http.Request request) {
         log.info("Creating course");
-        if(!authorizationService.isAuthorized(request, Set.of(Roles.ADMIN))){
+        if(!authorizationService.isAuthorized(request, Set.of(Roles.ADMIN, Roles.PROFESSOR))){
             log.info("Not authorized");
             return CompletableFuture.failedFuture(new IllegalAccessException("Unauthorized access"));
         }
@@ -191,10 +228,14 @@ public class FormsController extends Controller {
             return CompletableFuture.completedFuture(badRequest("Invalid multipart form data"));
         }
 
-        Map<String, String[]> formData = body.asFormUrlEncoded();
+        Map<String, String[]> formData = new HashMap<>(body.asFormUrlEncoded());
         if (formData == null || formData.isEmpty()) {
             log.error("Form data inside multipart is null or empty");
             return CompletableFuture.completedFuture(badRequest("Invalid form submission"));
+        }
+
+        if(request.session().get("role").get().equalsIgnoreCase(Roles.PROFESSOR.name())){
+            formData.put("professor_id",new String[] { request.session().get("userId").get()});
         }
 
         InputRecord  formRecord = new FormInputRecord(formData);

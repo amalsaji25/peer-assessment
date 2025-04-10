@@ -31,12 +31,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const csrfToken = document.querySelector("meta[name='csrf-token']").content
 
         fetch("/user-validation", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Csrf-Token": csrfToken,
-            },
-            body: JSON.stringify({ userId: userId }),
+            method: "POST", headers: {
+                "Content-Type": "application/json", "Csrf-Token": csrfToken,
+            }, body: JSON.stringify({userId: userId}),
         })
             .then((response) => {
                 if (!response.ok) {
@@ -108,14 +105,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const csrfToken = document.querySelector("meta[name='csrf-token']").content
 
         fetch("/create-password", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Csrf-Token": csrfToken,
-            },
-            body: JSON.stringify({
-                userId: userId,
-                password: password,
+            method: "POST", headers: {
+                "Content-Type": "application/json", "Csrf-Token": csrfToken,
+            }, body: JSON.stringify({
+                userId: userId, password: password,
             }),
         })
             .then((response) => {
@@ -148,9 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
         formData.append("password", password)
 
         fetch("/login", {
-            method: "POST",
-            body: formData,
-            headers: { "Csrf-Token": csrfToken },
+            method: "POST", body: formData, headers: {"Csrf-Token": csrfToken},
         })
             .then((response) => {
                 if (!response.ok) {

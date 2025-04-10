@@ -1,100 +1,120 @@
 package models;
 
-
 import jakarta.persistence.*;
-
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * Course is an entity class that represents a course in the system. It contains fields for the
+ * course's ID, code, name, section, professor, term, and whether a student file has been uploaded.
+ * The class also includes methods for getting and setting these fields.
+ */
 @Entity
-@Table(name = "courses",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"course_code", "course_section", "term"}),
-        indexes = @Index(name = "course", columnList = "course_code,course_section, term"))
+@Table(
+    name = "courses",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"course_code", "course_section", "term"}),
+    indexes = @Index(name = "course", columnList = "course_code,course_section, term"))
 public class Course implements Serializable {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "course_id")
-    private Long courseId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "course_id")
+  private Long courseId;
 
-    @Column(name="course_code", nullable = false, length = 100)
-    private String courseCode;
+  @Column(name = "course_code", nullable = false, length = 100)
+  private String courseCode;
 
-    @Column(name = "course_name", nullable = false, length = 100)
-    private String courseName;
+  @Column(name = "course_name", nullable = false, length = 100)
+  private String courseName;
 
-    @Column(name = "course_section", nullable = false, length = 100)
-    private String courseSection;
+  @Column(name = "course_section", nullable = false, length = 100)
+  private String courseSection;
 
-    @ManyToOne
-    @JoinColumn(name = "professor_id", referencedColumnName = "user_id", nullable = false)
-    private User professor;
+  @ManyToOne
+  @JoinColumn(name = "professor_id", referencedColumnName = "user_id", nullable = false)
+  private User professor;
 
-    @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<Enrollment> enrollments;
+  @OneToMany(
+      mappedBy = "course",
+      cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+  private List<Enrollment> enrollments;
 
-    @Column(name = "term", nullable = false)
-    private String term;
+  @Column(name = "term", nullable = false)
+  private String term;
 
-    @Column(name = "is_student_file_uploaded", nullable = false)
-    private boolean isStudentFileUploaded = false;
+  @Column(name = "is_student_file_uploaded", nullable = false)
+  private boolean isStudentFileUploaded = false;
 
-    public Course(){}
+  public Course() {}
 
-    public Course(String courseCode, String courseName, User professor, String term, String courseSection, Boolean isStudentFileUploaded) {
-        this.courseCode = courseCode;
-        this.courseName = courseName;
-        this.professor = professor;
-        this.term = term;
-        this.courseSection = courseSection;
-        this.isStudentFileUploaded = isStudentFileUploaded;
-    }
+  public Course(
+      String courseCode,
+      String courseName,
+      User professor,
+      String term,
+      String courseSection,
+      Boolean isStudentFileUploaded) {
+    this.courseCode = courseCode;
+    this.courseName = courseName;
+    this.professor = professor;
+    this.term = term;
+    this.courseSection = courseSection;
+    this.isStudentFileUploaded = isStudentFileUploaded;
+  }
 
-    public String getCourseCode() {
-        return courseCode;
-    }
+  public String getCourseCode() {
+    return courseCode;
+  }
 
-    public String getCourseName(){
-        return courseName;
-    }
+  public String getCourseName() {
+    return courseName;
+  }
 
-    public User getProfessor(){
-        return professor;
-    }
+  public User getProfessor() {
+    return professor;
+  }
 
-    public List<Enrollment> getEnrollments() {
-        return enrollments;
-    }
+  public List<Enrollment> getEnrollments() {
+    return enrollments;
+  }
 
-    public String getTerm() {
-        return term;
-    }
+  public String getTerm() {
+    return term;
+  }
 
-    public void setTerm(String term) {
-        this.term = term;
-    }
+  public void setTerm(String term) {
+    this.term = term;
+  }
 
-    public boolean isStudentFileUploaded() {
-        return isStudentFileUploaded;
-    }
+  public boolean isStudentFileUploaded() {
+    return isStudentFileUploaded;
+  }
 
-    public void setStudentFileUploaded(boolean studentFileUploaded) {
-        isStudentFileUploaded = studentFileUploaded;
-    }
+  public void setStudentFileUploaded(boolean studentFileUploaded) {
+    isStudentFileUploaded = studentFileUploaded;
+  }
 
-    public String getCourseSection() {
-        return courseSection;
-    }
+  public String getCourseSection() {
+    return courseSection;
+  }
 
-    public void setCourseSection(String courseSection) {
-        this.courseSection = courseSection;
-    }
+  public void setCourseSection(String courseSection) {
+    this.courseSection = courseSection;
+  }
 
-    public Long getCourseId() {
-        return courseId;
-    }
+  public Long getCourseId() {
+    return courseId;
+  }
 
-    public void setCourseId(Long courseId) {
-        this.courseId = courseId;
-    }
+  public void setCourseId(Long courseId) {
+    this.courseId = courseId;
+  }
+
+  public void setCourseCode(String courseCode) {
+    this.courseCode = courseCode;
+  }
+
+  public void setCourseName(String courseName) {
+    this.courseName = courseName;
+  }
 }

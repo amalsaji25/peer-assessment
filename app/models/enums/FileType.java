@@ -1,5 +1,9 @@
 package models.enums;
 
+/**
+ * FileType is an enumeration that represents different file types supported by the application.
+ * Currently, it only supports CSV files.
+ */
 public enum FileType {
   CSV("csv");
 
@@ -7,10 +11,6 @@ public enum FileType {
 
   FileType(String extension) {
     this.extension = extension;
-  }
-
-  public String getExtension() {
-    return extension;
   }
 
     public static boolean isValidFileExtension(String fileName) {
@@ -21,4 +21,8 @@ public enum FileType {
         }
         return false;
     }
+
+  public String getExtension() {
+    return extension;
+  }
 }

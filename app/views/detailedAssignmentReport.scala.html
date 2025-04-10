@@ -1,0 +1,321 @@
+@import models.dto.ReportDTO
+@(reportDTO: ReportDTO)
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Detailed Evaluation Report - @reportDTO.getAssignmentTitle</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@@400;600&display=swap" rel="stylesheet">
+        <style>
+                body {
+                    font-family: 'Inter', 'Segoe UI', sans-serif;
+                    background-color: #f9fafb;
+                    color: #333;
+                    padding: 30px 20px;
+                }
+
+                .report-header {
+                    margin-top: 10px;
+                    margin-bottom: 30px;
+                }
+
+                .stats-card {
+                    border-left: 4px solid #0d6efd;
+                    background-color: #f8f9fa;
+                }
+
+                .team-card {
+                    margin-bottom: 15px;
+                    border: none;
+                    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+                }
+
+                .team-header {
+                    background: linear-gradient(90deg, #e3f2fd, #ffffff);
+                    border-left: 5px solid #0d6efd;
+                    border-radius: 0.25rem;
+                    font-weight: 600;
+                }
+
+                .private-comments {
+                    background-color: #fff8e1;
+                    border-left: 4px solid #ffc107;
+                    padding: 15px;
+                    margin-bottom: 20px;
+                    border-radius: 0.5rem;
+                }
+
+                .comment-item {
+                    margin-bottom: 10px;
+                    padding-bottom: 10px;
+                    border-bottom: 1px dashed #dee2e6;
+                }
+
+                .comment-item:last-child {
+                    border-bottom: none;
+                }
+
+                .evaluation-section {
+                    margin-bottom: 25px;
+                    background-color: #ffffff;
+                    padding: 1.5rem;
+                    border-radius: 0.5rem;
+                    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+                    overflow-x: auto;
+                }
+
+                .table-responsive {
+                    margin-bottom: 20px;
+                }
+
+                .table th, .table td {
+                    white-space: normal !important;
+                    word-wrap: break-word;
+                    vertical-align: middle;
+                    text-align: center;
+                }
+
+                .table th {
+                    background-color: #e9ecef;
+                    text-align: center;
+                    max-width: 180px;
+                }
+
+                .table td {
+                    font-size: 0.95rem;
+                }
+
+                .peer-comments {
+                    background-color: #e8f5e9;
+                    border-left: 4px solid #4caf50;
+                    padding: 15px;
+                    border-radius: 0.5rem;
+                }
+
+                .print-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.4rem;
+                }
+
+                @Html("""
+                  @media print {
+                    .collapse {
+                      display: block !important;
+                      height: auto !important;
+                    }
+                    .team-header {
+                      background-color: #f8f9fa !important;
+                      -webkit-print-color-adjust: exact;
+                    }
+                    .print-btn {
+                      display: none;
+                    }
+                  }
+                """)
+        </style>
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="report-header">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                    <h1 class="h2 mb-0 me-3">Detailed Evaluation Report</h1>
+                    <button class="btn btn-outline-primary mt-2 mt-sm-0" onclick="window.print()">
+                        <i class="bi bi-printer"></i> Print Report
+                    </button>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h2 class="h4 mb-3">@reportDTO.getAssignmentTitle</h2>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <p class="mb-1"><strong>Course:</strong> @reportDTO.getCourseName </p>
+                                <p class="mb-1"><strong>Section:</strong> @reportDTO.getCourseSection</p>
+                                <p class="mb-1"><strong>Term:</strong> @reportDTO.getTerm</p>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="row g-3">
+                                    <div class="col-md-3 col-sm-6">
+                                        <div class="card stats-card h-100">
+                                            <div class="card-body py-2">
+                                                <h6 class="card-title text-muted mb-1">Total Teams</h6>
+                                                <h3 class="mb-0">@reportDTO.getTotalTeams</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-sm-6">
+                                        <div class="card stats-card h-100">
+                                            <div class="card-body py-2">
+                                                <h6 class="card-title text-muted mb-1">Total Evaluations</h6>
+                                                <h3 class="mb-0">@reportDTO.getTotalEvaluations</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-sm-6">
+                                        <div class="card stats-card h-100">
+                                            <div class="card-body py-2">
+                                                <h6 class="card-title text-muted mb-1">Completed</h6>
+                                                <h3 class="mb-0 text-success">@reportDTO.getCompletedEvaluations</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-sm-6">
+                                        <div class="card stats-card h-100">
+                                            <div class="card-body py-2">
+                                                <h6 class="card-title text-muted mb-1">Incomplete</h6>
+                                                <h3 class="mb-0 text-danger">@reportDTO.getIncompleteEvaluations</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+                <!-- Teams Accordion -->
+            <div class="accordion" id="teamsAccordion">
+            @for((team, index) <- reportDTO.getGroups.asScala.zipWithIndex) {
+                <div class="card team-card">
+                    <div class="card-header team-header" id="heading@index" data-bs-toggle="collapse" data-bs-target="#collapse@index" aria-expanded="false" aria-controls="collapse@index">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h2 class="h5 mb-0">Team @(index + 1): @team.getGroupName()</h2>
+                            <div>
+                                <span class="badge bg-primary me-2">Group Size: @team.getGroupSize()</span>
+                                <i class="bi bi-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="collapse@index" class="collapse" aria-labelledby="heading@index" data-bs-parent="#teamsAccordion">
+                        <div class="card-body">
+                                <!-- Private Comments -->
+                            <div class="private-comments mb-4">
+                                <h4 class="h6 mb-3">Private Comments for the Professor</h4>
+                                @if(team.getPrivateComments().isEmpty) {
+                                    <p class="text-muted">No private comments available.</p>
+                                } else {
+                                    @for(comment <- team.getPrivateComments().asScala) {
+                                        <div class="comment-item">
+                                            <p class="mb-1">@comment.getFeedbackText()</p>
+                                            <small class="text-muted">Written by: @comment.getReviewerName()</small>
+                                        </div>
+                                    }
+                                }
+                            </div>
+
+                                <!-- Student Evaluations -->
+                            @for(student <- team.getMembers.asScala) {
+                                <div class="evaluation-section">
+                                    <h3 class="h5 mb-3">Evaluation of @student.getUserName() (ID: @student.getUserId())</h3>
+
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Reviewer</th>
+                                                    @for(question <- student.getEvaluationMatrix.asScala) {
+                                                        <th>@question.getFeedbackQuestion()</th>
+                                                    }
+                                                    <th>Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @for((reviewer, idx) <- student.getReviewerNames.asScala.zipWithIndex) {
+                                                    <tr>
+                                                        <td>@reviewer</td>
+                                                        @for(question <- student.getEvaluationMatrix.asScala) {
+                                                            <td>@question.getMarksPerReviewer().get(idx)</td>
+                                                        }
+                                                        <td><strong>@student.getReviewerAverages().get(idx).formatted("%.2f")</strong></td>
+                                                    </tr>
+                                                }
+
+                                            <tr class="table-light">
+                                                <td><strong>Average</strong></td>
+                                                @for(question <- student.getEvaluationMatrix.asScala) {
+                                                    <td><strong>@question.getAverageMarkForQuestion().formatted("%.2f")</strong></td>
+                                                }
+                                                <td><strong>@student.getAverageFeedbackScore().formatted("%.2f")</strong></td>
+                                            </tr>
+
+                                            <tr class="table-light">
+                                                <td><strong>Class Average</strong></td>
+                                                @for(question <- student.getEvaluationMatrix.asScala) {
+                                                    <td>
+                                                        <strong>
+                                                        @{
+                                                            val classAvg = Option(student.getClassAverages)
+                                                            .flatMap((m: java.util.Map[String, java.lang.Float]) =>
+                                                                Option(m.get(question.getFeedbackQuestion()))
+                                                            )
+                                                            .getOrElse(0.0f)
+                                                            String.format("%.2f", classAvg)
+                                                        }
+                                                        </strong>
+                                                    </td>
+                                                }
+                                                <td>
+                                                    <strong>
+                                                    @student.getOverallClassAverage().formatted("%.2f")
+                                                    </strong>
+                                                </td>
+                                            </tr>
+
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                        <!-- Peer Comments -->
+                                    <div class="peer-comments mb-4">
+                                        <h4 class="h6 mb-3">Overall Comments from Peers</h4>
+                                        @if(student.getFeedbacksByReviewer().isEmpty) {
+                                            <p class="text-muted">No peer comments available.</p>
+                                        } else {
+                                            @for((_, comments) <- student.getFeedbacksByReviewer().asScala; comment <- comments.asScala if comment.getQuestionText().equalsIgnoreCase("Overall Feedback Comment")) {
+                                                <div class="comment-item">
+                                                    <p class="mb-1">@comment.getFeedbackText()</p>
+                                                    <small class="text-muted">Written by: @comment.getReviewerName()</small>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                                @if(student != team.getMembers.asScala.last) {
+                                    <hr class="my-4">
+                                    }
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const teamHeaders = document.querySelectorAll('.team-header');
+                    teamHeaders.forEach(header => {
+                        header.addEventListener('click', function () {
+                            const icon = this.querySelector('.bi');
+                            if (icon) {
+                                icon.classList.toggle('bi-chevron-down');
+                                icon.classList.toggle('bi-chevron-up');
+                            }
+                        });
+
+                        const link = document.createElement('link');
+                        link.rel = 'stylesheet';
+                        link.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@@1.8.1/font/bootstrap-icons.css';
+                        document.head.appendChild(link);
+                    });
+                });
+        </script>
+    </body>
+</html>

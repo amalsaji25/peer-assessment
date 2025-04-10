@@ -1,14 +1,20 @@
 package models;
 
 import jakarta.persistence.*;
-import models.enums.Status;
-import repository.core.CourseRepository;
-
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+import models.enums.Status;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+import repository.core.CourseRepository;
 
+/**
+ * Assignment is an entity class that represents an assignment in the system. It contains fields for
+ * the assignment's ID, course, title, description, start date, due date, review tasks, feedback
+ * questions, status, and whether peer review is assigned. The class also includes methods for
+ * getting and setting these fields.
+ */
 @Entity
 @Table(name = "assignments")
 public class Assignment implements Serializable {
@@ -19,6 +25,7 @@ public class Assignment implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "course_code", referencedColumnName = "course_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Course course;
 
     @Column(name = "title", nullable = false)
@@ -69,44 +76,48 @@ public class Assignment implements Serializable {
         return course;
     }
 
-    public String getTitle() {
-        return title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public LocalDate getDueDate() {
-        return dueDate;
-    }
-
-    public List<ReviewTask> getReviewTasks() {
-        return this.reviewTasks;
-    }
-
-    public List<FeedbackQuestion> getFeedbackQuestions() {
-        return feedbackQuestions;
-    }
-
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    public String getTitle() {
+        return title;
     }
 
     public void setTitle(String title) {
         this.title = title;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public LocalDate getDueDate() {
+        return dueDate;
     }
 
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
     }
 
+    public List<ReviewTask> getReviewTasks() {
+        return this.reviewTasks;
+    }
+
     public void setReviewTasks(List<ReviewTask> reviewTasks) {
         this.reviewTasks = reviewTasks;
+    }
+
+    public List<FeedbackQuestion> getFeedbackQuestions() {
+        return feedbackQuestions;
+    }
+
+    public void setFeedbackQuestions(List<FeedbackQuestion> feedbackQuestions) {
+        this.feedbackQuestions = feedbackQuestions;
     }
 
     public LocalDate getStartDate() {
@@ -115,10 +126,6 @@ public class Assignment implements Serializable {
 
     public void setStartDate(LocalDate startDate) {
         this.startDate = startDate;
-    }
-
-    public void setFeedbackQuestions(List<FeedbackQuestion> feedbackQuestions) {
-        this.feedbackQuestions = feedbackQuestions;
     }
 
     public String getStatus() {
@@ -143,5 +150,9 @@ public class Assignment implements Serializable {
 
     public void setPeerAssigned(boolean peerAssigned) {
         this.peerAssigned = peerAssigned;
+    }
+
+    public void setAssignmentId(Long assignmentId) {
+        this.assignmentId = assignmentId;
     }
 }

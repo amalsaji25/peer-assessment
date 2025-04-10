@@ -21,6 +21,8 @@ POST    /api/create-user                controllers.FormsController.createUser(r
 
 POST    /api/create-course              controllers.FormsController.createCourse(request: play.mvc.Http.Request)
 
+DELETE     /api/courses/unassign/:courseCode   controllers.CoreServiceController.unassignCourse(courseCode: String, request:play.mvc.Http.Request)
+
 POST    /api/assignments/create      controllers.FormsController.createAssignment(request: play.mvc.Http.Request)
 
 GET     /api/assignments/:assignmentId  controllers.CoreServiceController.getAssignmentDetails(assignmentId: Long, request: play.mvc.Http.Request)
@@ -42,6 +44,12 @@ GET    /api/student/courses       controllers.CoreServiceController.getStudentEn
 POST   /api/review-tasks/save-submit/:reviewTaskId   controllers.FormsController.saveOrSubmitReviewTask(reviewTaskId: Long, request: play.mvc.Http.Request)
 
 GET    /api/professor/validate/:professorId          controllers.CoreServiceController.validateProfessor(professorId: Long, request: play.mvc.Http.Request)
+
+GET    /api/reports/detailed/:assignmentId                   controllers.CoreServiceController.getAssignmentDetailedSummary(assignmentId: Long, request: play.mvc.Http.Request)
+
+GET    /api/reports/summary/:assignmentId                   controllers.CoreServiceController.getAssignmentSummary(assignmentId: Long, request: play.mvc.Http.Request)
+
+GET    /api/reports/student/:assignmentId                   controllers.CoreServiceController.getStudentAssignmentReport(assignmentId: Long, request: play.mvc.Http.Request)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

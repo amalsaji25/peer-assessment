@@ -1,23 +1,23 @@
 // Initialize Bootstrap collapse functionality
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
 
     populateTermDropdown();
 
     // Add click event listeners for the collapsible sections
-    document.getElementById('addDetailsHeader').addEventListener('click', function() {
+    document.getElementById('addDetailsHeader').addEventListener('click', function () {
         const icon = this.querySelector('.bi');
         icon.classList.toggle('bi-chevron-down');
         icon.classList.toggle('bi-chevron-up');
     });
 
-    document.getElementById('dataManagementHeader').addEventListener('click', function() {
+    document.getElementById('dataManagementHeader').addEventListener('click', function () {
         const icon = this.querySelector('.bi');
         icon.classList.toggle('bi-chevron-down');
         icon.classList.toggle('bi-chevron-up');
     });
 
     // Add Professor form submission
-    document.getElementById('saveUserBtn').addEventListener('click', function() {
+    document.getElementById('saveUserBtn').addEventListener('click', function () {
         const form = document.getElementById('addUserForm');
         if (form.checkValidity()) {
             const formData = new FormData(form);
@@ -30,12 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const csrfToken = document.querySelector("input[name='csrfToken']").value;
             // Send data to backend API
             fetch('/api/create-user', {
-                method: 'POST',
-                headers: {
+                method: 'POST', headers: {
                     "Csrf-Token": csrfToken
-                },
-                body: formData,
-                credentials: "same-origin"
+                }, body: formData, credentials: "same-origin"
             })
                 .then((response) => response.json())
                 .then((data) => {
@@ -104,15 +101,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Add Course form submission
-    document.getElementById('saveCourseBtn').addEventListener('click', function() {
+    document.getElementById('saveCourseBtn').addEventListener('click', function () {
         const form = document.getElementById('addCourseForm');
         if (form.checkValidity()) {
             const formData = new FormData(form);
 
             // Send data to backend API
             fetch('/api/create-course', {
-                method: 'POST',
-                body: formData
+                method: 'POST', body: formData
             })
                 .then((response) => response.json())
                 .then((data) => {
@@ -135,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const uploadForms = document.querySelectorAll(".uploadForm");
 
-    uploadForms.forEach(function(uploadForm) {
+    uploadForms.forEach(function (uploadForm) {
 
         if (uploadForm) {
             uploadForm.addEventListener("submit", function (event) {
@@ -155,12 +151,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const csrfToken = csrfTokenInput ? csrfTokenInput.value : "";
 
                 fetch(actionUrl, {
-                    method: "POST",
-                    body: formData,
-                    headers: {
+                    method: "POST", body: formData, headers: {
                         "Csrf-Token": csrfToken // Include CSRF token in headers
-                    },
-                    credentials: "same-origin"
+                    }, credentials: "same-origin"
                 })
                     .then(response => response.json())
                     .then(data => {

@@ -44,12 +44,9 @@ class ApiService {
         const csrfToken = document.querySelector("input[name='csrfToken']")?.value || ""
 
         const response = await fetch("/api/assignments/create", {
-            method: "POST",
-            headers: {
+            method: "POST", headers: {
                 "Csrf-Token": csrfToken,
-            },
-            body: formData,
-            credentials: "same-origin",
+            }, body: formData, credentials: "same-origin",
         })
 
         if (!response.ok) {
@@ -63,12 +60,9 @@ class ApiService {
         const csrfToken = document.querySelector("input[name='csrfToken']")?.value || ""
 
         const response = await fetch(`/api/assignments/edit/${assignmentId}`, {
-            method: "POST",
-            headers: {
+            method: "POST", headers: {
                 "Csrf-Token": csrfToken,
-            },
-            body: formData,
-            credentials: "same-origin",
+            }, body: formData, credentials: "same-origin",
         })
 
         if (!response.ok) {
@@ -82,13 +76,9 @@ class ApiService {
         const csrfToken = document.querySelector("input[name='csrfToken']")?.value || ""
 
         const response = await fetch(`/api/assignments/delete/${assignmentId}`, {
-            method: "DELETE",
-            headers: {
-                "Content-Type": "application/json",
-                "Csrf-Token": csrfToken,
-            },
-            body: JSON.stringify({ courseCode }),
-            credentials: "same-origin",
+            method: "DELETE", headers: {
+                "Content-Type": "application/json", "Csrf-Token": csrfToken,
+            }, body: JSON.stringify({courseCode}), credentials: "same-origin",
         })
 
         if (!response.ok) {
@@ -110,12 +100,9 @@ class ApiService {
         const csrfToken = document.querySelector("input[name='csrfToken']")?.value || ""
 
         const response = await fetch("/api/download/studentFeedback", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Csrf-Token": csrfToken,
-            },
-            body: JSON.stringify(studentData),
+            method: "POST", headers: {
+                "Content-Type": "application/json", "Csrf-Token": csrfToken,
+            }, body: JSON.stringify(studentData),
         })
 
         if (!response.ok) {
@@ -133,6 +120,50 @@ class ApiService {
         a.click()
         a.remove()
         window.URL.revokeObjectURL(url)
+    }
+
+    static async assignCourse(courseCode, courseName, courseSection, term) {
+        const csrfToken = document.querySelector("input[name='csrfToken']")?.value || "";
+
+        const formData = new FormData();
+        formData.append("course_code", courseCode);
+        formData.append("course_name", courseName);
+        formData.append("course_section", courseSection);
+        formData.append("term", term);
+
+        const response = await fetch('/api/create-course', {
+            method: 'POST', body: formData, headers: {
+                'Csrf-Token': csrfToken
+            }, credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({
+                message: `Failed with status ${response.status}`
+            }));
+            throw new Error(error.message || `Failed to assign course: ${response.status}`);
+        }
+
+        return response.json();
+    }
+
+    static async unassignCourse(courseCode) {
+        const csrfToken = document.querySelector("input[name='csrfToken']")?.value || "";
+
+        const response = await fetch(`/api/courses/unassign/${courseCode}`, {
+            method: 'DELETE', headers: {
+                'Content-Type': 'application/json', 'Csrf-Token': csrfToken
+            }, credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({
+                message: `Failed with status ${response.status}`
+            }));
+            throw new Error(error.message || `Failed to unassign course: ${response.status}`);
+        }
+
+        return response.json();
     }
 }
 
@@ -173,9 +204,7 @@ class UiService {
     }
 
     static populateCourseDropdowns(courses, selectedCourseCode = null) {
-        const courseSelects = document.querySelectorAll(
-            "#course-select, #course-filter, #edit-course-select, #export-course-select, #delete-course-select ,#template-course-filter"
-        )
+        const courseSelects = document.querySelectorAll("#course-select, #course-filter, #edit-course-select, #export-course-select, #delete-course-select ,#template-course-filter, #course-filter-for-course-manage")
 
         courseSelects.forEach((select) => {
             // Preserve first option if it's a placeholder
@@ -296,7 +325,7 @@ class UiService {
         toastContainer.appendChild(notification)
 
         // Initialize and show toast
-        const toast = new bootstrap.Toast(notification, { delay: 3000 })
+        const toast = new bootstrap.Toast(notification, {delay: 3000})
         toast.show()
 
         // Remove after hiding
@@ -365,8 +394,7 @@ class UiService {
         document.getElementById(`${formPrefix}-start-date`).value = mode === "template" ? "" : assignment.startDate
         document.getElementById(`${formPrefix}-due-date`).value = mode === "template" ? "" : assignment.dueDate
         document.getElementById(`${formPrefix}-assignment-description`).value = assignment.description
-        document.getElementById("edit-course-display").value =
-            `${assignment.courseCode} (${assignment.courseSection}): ${assignment.title}`
+        document.getElementById("edit-course-display").value = `${assignment.courseCode} (${assignment.courseSection}): ${assignment.title}`
 
         const courseSelect = document.getElementById("edit-course-select");
         const fullCourseValue = `${assignment.courseCode}:::${assignment.courseSection}:::${assignment.term}`;
@@ -384,7 +412,7 @@ class UiService {
 
         assignment.reviewQuestions.forEach((q) => {
             const questionElement = this.createQuestionElement(q.question, q.marks, formPrefix === "edit" ? q.questionId : null)
-            if (q.question === "Private Comment for Professor") {
+            if (q.question === "Overall Feedback Comment") {
                 questionElement.style.display = "none";
             }
             reviewContainer.appendChild(questionElement)
@@ -459,7 +487,7 @@ class UiService {
             row.innerHTML = `
         <td>${member.userName}</td>
         <td>${member.email}</td>
-        <td>${member.averageFeedbackScore}</td>
+        <td>${member.averageFeedbackScore}/${member.maximumAverageFeedbackScoreForReviewTask}</td>
         <td><span class="badge ${member.status === "COMPLETED" ? "bg-success" : "bg-danger"}">${member.status}</span></td>
         <td class="text-end">
           <button class="btn btn-sm btn-outline-secondary download-submission" data-submission-id="${member.submissionId}">
@@ -478,7 +506,12 @@ class UiService {
                     email: member.email,
                     status: member.status,
                     averageFeedbackScore: member.averageFeedbackScore,
+                    classAverages: member.classAverages,
+                    overallClassAverage: member.overallClassAverage,
+                    evaluationMatrix: member.evaluationMatrix,
+                    maximumAverageFeedbackScoreForReviewTask: member.maximumAverageFeedbackScoreForReviewTask,
                     feedbacks: member.feedbacks,
+                    reviewerAverages: member.reviewerAverages
                 }
 
                 try {
@@ -556,6 +589,23 @@ class UiService {
             }
         }
     }
+
+    static showValidationResult(message, type) {
+        const validationResult = document.getElementById('validation-result');
+        validationResult.className = `alert alert-${type}`;
+        validationResult.textContent = message;
+        validationResult.style.display = 'block';
+    }
+
+    static resetForm(form) {
+        if (form) {
+            form.reset();
+            const assignCourseBtn = document.getElementById('assign-course-btn');
+            if (assignCourseBtn) {
+                assignCourseBtn.disabled = true;
+            }
+        }
+    }
 }
 
 // Event Handlers - Centralized event handling
@@ -575,6 +625,7 @@ class EventHandlers {
             this.setupAssignmentManagement()
             this.setupUploadAndDownloadAndDeleteForms()
             this.setupAssignmentTypeSelection()
+            this.setupCourseManagement()
 
             const toggleBtn = document.getElementById("toggle-filter-btn");
             const filterControls = document.getElementById("filter-controls");
@@ -600,7 +651,7 @@ class EventHandlers {
 
             const uploadForms = document.querySelectorAll(".uploadForm");
 
-            uploadForms.forEach(function(uploadForm) {
+            uploadForms.forEach(function (uploadForm) {
 
                 if (uploadForm) {
                     uploadForm.addEventListener("submit", function (event) {
@@ -620,12 +671,9 @@ class EventHandlers {
                         const csrfToken = csrfTokenInput ? csrfTokenInput.value : "";
 
                         fetch(actionUrl, {
-                            method: "POST",
-                            body: formData,
-                            headers: {
+                            method: "POST", body: formData, headers: {
                                 "Csrf-Token": csrfToken // Include CSRF token in headers
-                            },
-                            credentials: "same-origin"
+                            }, credentials: "same-origin"
                         })
                             .then(response => response.json())
                             .then(data => {
@@ -715,7 +763,7 @@ class EventHandlers {
                         setTimeout(() => {
                             window.location.reload()
                         }, 1000)
-                    }, { once: true })
+                    }, {once: true})
                     modalInstance.hide()
                 } catch (error) {
                     console.error("Error creating assignment:", error)
@@ -743,15 +791,11 @@ class EventHandlers {
                         UiService.showNotification("Assignment created from template!", "success")
 
                         const modalElement = document.getElementById("edit-assignment-modal")
-                        modalElement.addEventListener(
-                            "hidden.bs.modal",
-                            () => {
-                                setTimeout(() => {
-                                    window.location.reload()
-                                }, 1000)
-                            },
-                            { once: true }
-                        )
+                        modalElement.addEventListener("hidden.bs.modal", () => {
+                            setTimeout(() => {
+                                window.location.reload()
+                            }, 1000)
+                        }, {once: true})
 
                         const modalInstance = bootstrap.Modal.getInstance(modalElement)
                         modalInstance.hide()
@@ -813,11 +857,10 @@ class EventHandlers {
                 }
 
                 // Reload dashboard with filter
-                const headers = selectedCourse === "all" ? {} : { termFilter: selectedTerm, courseFilter: selectedCourse }
+                const headers = selectedCourse === "all" ? {} : {termFilter: selectedTerm, courseFilter: selectedCourse}
 
                 fetch("/dashboard", {
-                    method: "GET",
-                    headers: headers,
+                    method: "GET", headers: headers,
                 })
                     .then((response) => response.text())
                     .then((html) => {
@@ -835,8 +878,7 @@ class EventHandlers {
                         // Update counts
                         document.getElementById("student-count").textContent = newDoc.getElementById("student-count").textContent
 
-                        document.getElementById("assignment-count").textContent =
-                            newDoc.getElementById("assignment-count").textContent
+                        document.getElementById("assignment-count").textContent = newDoc.getElementById("assignment-count").textContent
 
                         document.getElementById("course-count").textContent = newDoc.getElementById("course-count").textContent
 
@@ -865,7 +907,7 @@ class EventHandlers {
                     const courses = await ApiService.fetchCourses()
 
                     UiService.populateCourseDropdowns(courses, assignment.courseCode)
-                    UiService.populateAssignmentForm(assignment,"edit")
+                    UiService.populateAssignmentForm(assignment, "edit")
                     editAssignmentModal.show()
                 } catch (error) {
                     console.error("Error loading assignment:", error)
@@ -905,9 +947,19 @@ class EventHandlers {
 
     static setupUploadAndDownloadAndDeleteForms() {
         // Export form setup
+        const summaryResultsBtn = document.getElementById("summary-results-btn")
+        const detailedResultsBtn = document.getElementById("detailed-results-btn")
         const exportCourseSelect = document.getElementById("export-course-select")
         const exportAssignmentSelect = document.getElementById("export-assignment-select")
         const exportDownloadBtn = document.getElementById("export-download-btn")
+
+        if (summaryResultsBtn) {
+            summaryResultsBtn.disabled = true
+        }
+
+        if (detailedResultsBtn) {
+            detailedResultsBtn.disabled = true
+        }
 
         if (exportCourseSelect) {
             exportCourseSelect.addEventListener("change", async function () {
@@ -923,6 +975,15 @@ class EventHandlers {
                             option.textContent = assignment.title
                             exportAssignmentSelect.appendChild(option)
                         })
+
+                        // Disable the export buttons when course changes
+                        if (summaryResultsBtn) {
+                            summaryResultsBtn.disabled = true
+                        }
+
+                        if (detailedResultsBtn) {
+                            detailedResultsBtn.disabled = true
+                        }
                     } catch (error) {
                         console.error("Error loading assignments:", error)
                         UiService.showNotification("Failed to load assignments", "error")
@@ -930,16 +991,89 @@ class EventHandlers {
                 } else {
                     exportAssignmentSelect.disabled = true
                     exportAssignmentSelect.innerHTML = '<option value="">Select Assignment</option>'
-                    exportDownloadBtn.disabled = true
+
+                    if (summaryResultsBtn) {
+                        summaryResultsBtn.disabled = true
+                    }
+
+                    if (detailedResultsBtn) {
+                        detailedResultsBtn.disabled = true
+                    }
+                }
+            })
+        }
+
+        if (summaryResultsBtn) {
+            summaryResultsBtn.addEventListener("click", async function () {
+                const assignmentId = exportAssignmentSelect.value;
+
+                if (assignmentId) {
+                    try {
+                        UiService.showNotification("Opening summary report...", "info");
+
+                        const reportUrl = `/api/reports/summary/${assignmentId}`;
+                        window.open(reportUrl, "_blank");
+
+                        const modalElement = document.getElementById("export-data-modal");
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        modal.hide();
+                    } catch (error) {
+                        console.error("Error opening summary report:", error);
+                        UiService.showNotification("Failed to open summary report: " + error.message, "error");
+                    }
+                }
+            });
+        }
+
+        // Handle Detailed Results button click
+        if (detailedResultsBtn) {
+            detailedResultsBtn.addEventListener("click", async function () {
+                const courseCode = exportCourseSelect.value
+                const assignmentId = exportAssignmentSelect.value
+
+                if (courseCode && assignmentId) {
+                    try {
+                        UiService.showNotification("Generating detailed report...", "info")
+
+                        // Step 1: Validate the report can be generated (lightweight check)
+                        const response = await fetch(`/api/reports/detailed/${assignmentId}`, {
+                            method: "HEAD"  // 🔍 Only ping the backend
+                        })
+
+                        if (!response.ok) {
+                            throw new Error(`Failed to validate report: ${response.status}`)
+                        }
+
+                        // Step 2: Open the actual HTML report
+                        const reportWindow = window.open('', '_blank')
+                        reportWindow.location.href = `/api/reports/detailed/${assignmentId}`
+
+                        // Step 3: Close modal
+                        const modalElement = document.getElementById("export-data-modal")
+                        const modal = bootstrap.Modal.getInstance(modalElement)
+                        modal.hide()
+                    } catch (error) {
+                        console.error("Error generating detailed report:", error)
+                        UiService.showNotification("Failed to generate detailed report: " + error.message, "error")
+                    }
                 }
             })
         }
 
         if (exportAssignmentSelect) {
             exportAssignmentSelect.addEventListener("change", function () {
-                exportDownloadBtn.disabled = !this.value
+                const isValid = this.value && exportCourseSelect.value;
+
+                if (summaryResultsBtn) {
+                    summaryResultsBtn.disabled = !isValid;
+                }
+
+                if (detailedResultsBtn) {
+                    detailedResultsBtn.disabled = !isValid;
+                }
             })
         }
+
 
         // Delete form setup
         const deleteCourseSelect = document.getElementById("delete-course-select")
@@ -1162,6 +1296,178 @@ class EventHandlers {
                     }
                 }
             })
+        }
+    }
+
+    static setupCourseManagement() {
+        const courseOptions = document.querySelectorAll('.course-option');
+        const courseManagementOptions = document.getElementById('course-management-options');
+        const assignNewCourseForm = document.getElementById('assign-new-course-form');
+        const editAssignedCourseForm = document.getElementById('edit-assigned-course-form');
+        const backToCourseOptionsBtn = document.getElementById('back-to-course-options-btn');
+        const backToCourseOptionsBtnEdit = document.getElementById('back-to-course-options-btn-edit');
+        const unassignCourseBtn = document.getElementById('unassign-course-btn');
+        const validationResult = document.getElementById('validation-result');
+        const newCourseForm = document.getElementById('new-course-form');
+        const editCourseForm = document.getElementById('edit-course-form');
+        const assignedCourses = document.querySelectorAll(".course-filter-for-course-manage")
+        const courseTerm = document.querySelectorAll(".term-filter")
+        const courseDetails = document.getElementById('course-details');
+        const courseInfo = document.getElementById('course-info');
+        const courseSelect = document.getElementById("course-filter-for-course-manage")
+
+
+        // Handle Option Selection
+        if (courseOptions) {
+            courseOptions.forEach(option => {
+                option.addEventListener('click', function () {
+                    const selectedOption = this.getAttribute('data-option')
+
+                    courseManagementOptions.style.display = 'none';
+
+                    if (selectedOption === 'assign-new') {
+                        assignNewCourseForm.style.display = 'block';
+                    } else if (selectedOption === 'edit-assigned') {
+                        editAssignedCourseForm.style.display = 'block';
+                    }
+                });
+            });
+        }
+
+        // Back to options button for each modal
+        if (backToCourseOptionsBtn) {
+            backToCourseOptionsBtn.addEventListener('click', function () {
+                assignNewCourseForm.style.display = 'none';
+                courseManagementOptions.style.display = 'block';
+                UiService.resetForm(newCourseForm);
+            });
+        }
+
+        if (backToCourseOptionsBtnEdit) {
+            backToCourseOptionsBtnEdit.addEventListener('click', function () {
+                editAssignedCourseForm.style.display = 'none';
+                courseManagementOptions.style.display = 'block';
+                UiService.resetForm(editCourseForm);
+            });
+        }
+
+        let selectedTerm = null;
+
+        // Assign course form submission
+        if (newCourseForm) {
+            newCourseForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const courseCode = document.getElementById('course-code').value;
+                const courseName = document.getElementById('course-name').value;
+                const courseSection = document.getElementById('course-section').value;
+                const term = selectedTerm;
+
+                if (!courseName || !courseSection || !term) {
+                    UiService.showValidationResult('Please fill in all fields', 'danger');
+                    return;
+                }
+
+                try {
+                    await ApiService.assignCourse(courseCode, courseName, courseSection, term);
+
+                    // Close modal and show success notification
+                    const modalElement = document.getElementById('manage-course-modal');
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    modal.hide();
+
+                    UiService.showNotification('Course assigned successfully!', 'success');
+
+                    // Reload page after a short delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } catch (error) {
+                    console.error('Error assigning course:', error);
+                    UiService.showValidationResult('An error occurred while assigning the course', 'danger');
+                }
+            });
+        }
+
+        // Handle term selection for template
+        if (courseTerm && courseTerm.length > 0) {
+            courseTerm.forEach((termSelect, index) => {
+                termSelect.addEventListener("change", function () {
+                    selectedTerm = this.value
+                    if (!selectedTerm) {
+                        courseSelect.innerHTML = '<option value="">Select Course</option>'
+                        courseSelect.disabled = true
+                        return
+                    }
+
+                    UiService.handleTermSelect(this, courseSelect)
+                })
+            })
+        }
+        let selectedCourseCode = null;
+
+        // Handle course selection for template
+        if (assignedCourses && assignedCourses.length > 0) {
+            assignedCourses.forEach((courseSelect, index) => {
+                courseSelect.addEventListener("change", function () {
+                    selectedCourseCode = courseSelect.value;
+
+                    if (selectedCourseCode) {
+                        // Show the course-details block
+                        courseDetails.style.display = 'block'
+                    } else {
+                        courseDetails.style.display = 'none'
+                        courseInfo.innerHTML = ""
+                    }
+                })
+            })
+        }
+
+
+        // Unassign course button
+        if (unassignCourseBtn) {
+            unassignCourseBtn.addEventListener('click', async function () {
+                const courseCode = selectedCourseCode;
+
+                if (!courseCode) {
+                    return;
+                }
+
+                if (confirm('Are you sure you want to unassign from this course? This action cannot be undone.')) {
+                    try {
+                        await ApiService.unassignCourse(courseCode);
+
+                        // Close modal and show success notification
+                        const modalElement = document.getElementById('manage-course-modal');
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        modal.hide();
+
+                        UiService.showNotification('Course unassigned successfully!', 'success');
+
+                        // Reload page after a short delay
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } catch (error) {
+                        console.error('Error unassigning course:', error);
+                        UiService.showNotification('Failed to unassign course: ' + error.message, 'error');
+                    }
+                }
+            });
+        }
+
+        // Reset modal when it's closed
+        const manageCourseModal = document.getElementById('manage-course-modal');
+        if (manageCourseModal) {
+            manageCourseModal.addEventListener('hidden.bs.modal', function () {
+                courseManagementOptions.style.display = 'block';
+                assignNewCourseForm.style.display = 'none';
+                editAssignedCourseForm.style.display = 'none';
+                UiService.resetForm(newCourseForm);
+                UiService.resetForm(editCourseForm);
+                validationResult.style.display = 'none';
+                courseDetails.style.display = 'none';
+            });
         }
     }
 }

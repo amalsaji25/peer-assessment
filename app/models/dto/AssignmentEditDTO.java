@@ -2,6 +2,11 @@ package models.dto;
 
 import java.util.List;
 
+/**
+ * AssignmentEditDTO is a data transfer object (DTO) that represents the form data for creating or
+ * updating an assignment. It contains fields for the assignment's title, course, course section,
+ * course code, term, description, due date, start date, and a list of review questions.
+ */
 public class AssignmentEditDTO {
     public Long assignmentId;
     public String title;
@@ -12,12 +17,6 @@ public class AssignmentEditDTO {
     public String courseSection;
     public String term;
     public List<ReviewQuestionDTO> reviewQuestions;
-
-    public static class ReviewQuestionDTO {
-        public Long questionId;
-        public String question;
-        public int marks;
-    }
 
     public Long getAssignmentId() {
         return assignmentId;
@@ -78,6 +77,7 @@ public class AssignmentEditDTO {
     public String getCourseSection() {
         return courseSection;
     }
+
     public void setCourseSection(String courseSection) {
         this.courseSection = courseSection;
     }
@@ -88,5 +88,11 @@ public class AssignmentEditDTO {
 
     public void setTerm(String term) {
         this.term = term;
+    }
+
+    public static class ReviewQuestionDTO {
+        public Long questionId;
+        public String question;
+        public int marks;
     }
 }

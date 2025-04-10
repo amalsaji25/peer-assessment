@@ -1,5 +1,6 @@
 package repository.core;
 
+import jakarta.persistence.NoResultException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -8,11 +9,14 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import jakarta.persistence.NoResultException;
 import models.Feedback;
 import play.db.jpa.JPAApi;
 
+/**
+ * FeedbackRepository is a singleton class that handles the persistence of Feedback entities in the
+ * database. It provides methods to find feedback by review task ID, find feedback received by a
+ * student, and delete feedback by ID.
+ */
 @Singleton
 public class FeedbackRepository {
   private final JPAApi jpaApi;
@@ -23,45 +27,71 @@ public class FeedbackRepository {
     this.jpaApi = jpaApi;
   }
 
-    public Optional<List<Feedback>> findFeedbacksReviewTaskId(Long reviewTaskId) {
-        return jpaApi.withTransaction(entityManager -> {
-            try {
-                List<Feedback> feedback = entityManager
-                        .createQuery(
-                                "SELECT f FROM Feedback f WHERE f.reviewTask.id = :reviewTaskId",
-                                Feedback.class)
-                        .setParameter("reviewTaskId", reviewTaskId)
-                        .getResultList();
-                return Optional.of(feedback);
-            } catch (NoResultException e) {
-                return Optional.empty();
-            }
+  /**
+   * Finds feedback by review task ID.
+   *
+   * @param reviewTaskId the ID of the review task
+   * @return an Optional containing a list of Feedback objects if found, or an empty Optional if not
+   *     found
+   */
+  public Optional<List<Feedback>> findFeedbacksReviewTaskId(Long reviewTaskId) {
+    return jpaApi.withTransaction(
+        entityManager -> {
+          try {
+            List<Feedback> feedback =
+                entityManager
+                    .createQuery(
+                        "SELECT f FROM Feedback f WHERE f.reviewTask.id = :reviewTaskId",
+                        Feedback.class)
+                    .setParameter("reviewTaskId", reviewTaskId)
+                    .getResultList();
+            return Optional.of(feedback);
+          } catch (NoResultException e) {
+            return Optional.empty();
+          }
         });
-    }
+  }
 
-    public CompletionStage<List<Feedback>> findFeedbacksReceivedByStudent(Long userId, List<String> courseCodes) {
-        return CompletableFuture.supplyAsync(() -> jpaApi.withTransaction(entityManager -> {
-            try {
-                List<Feedback> feedbacks = entityManager
+  /**
+   * Finds feedback received by a student for a list of course codes.
+   *
+   * @param userId the ID of the student
+   * @param courseCodes a list of course codes
+   * @return a CompletionStage containing a list of Feedback objects
+   */
+  public CompletionStage<List<Feedback>> findFeedbacksReceivedByStudent(
+      Long userId, List<String> courseCodes) {
+    return CompletableFuture.supplyAsync(
+        () ->
+            jpaApi.withTransaction(
+                entityManager -> {
+                  try {
+                    return entityManager
                         .createQuery(
-                                "SELECT f FROM Feedback f WHERE f.reviewTask.reviewee.userId = :userId AND f.reviewTask.assignment.course.courseCode IN :courseCodes",
-                                Feedback.class)
+                            "SELECT f FROM Feedback f WHERE f.reviewTask.reviewee.userId = :userId AND f.reviewTask.assignment.course.courseCode IN :courseCodes",
+                            Feedback.class)
                         .setParameter("userId", userId)
                         .setParameter("courseCodes", courseCodes)
                         .getResultList();
-                return feedbacks;
-            } catch (NoResultException e) {
-                return List.of();
-            }
-        }), executor);
-    }
+                  } catch (NoResultException e) {
+                    return List.of();
+                  }
+                }),
+        executor);
+  }
 
-    public void deleteById(Long id) {
-        jpaApi.withTransaction(entityManager -> {
-            Feedback feedback = entityManager.find(Feedback.class, id);
-            if (feedback != null) {
-                entityManager.remove(feedback);
-            }
+  /**
+   * Deletes feedback by ID.
+   *
+   * @param id the ID of the feedback
+   */
+  public void deleteById(Long id) {
+    jpaApi.withTransaction(
+        entityManager -> {
+          Feedback feedback = entityManager.find(Feedback.class, id);
+          if (feedback != null) {
+            entityManager.remove(feedback);
+          }
         });
-    }
+  }
 }

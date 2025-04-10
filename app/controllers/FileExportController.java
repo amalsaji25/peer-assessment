@@ -2,15 +2,18 @@ package controllers;
 
 import static play.mvc.Results.*;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import models.dto.FeedbackDTO;
+import models.dto.MemberSubmissionDTO;
 import models.enums.Roles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +25,10 @@ import services.AuthenticationService;
 import services.AuthorizationService;
 import services.export.ExportService;
 
+/**
+ * Controller for handling file export requests, including downloading Excel reports and student
+ * feedback reports.
+ */
 @Security.Authenticated(AuthenticationService.class)
 @Singleton
 public class FileExportController {
@@ -38,6 +45,14 @@ public class FileExportController {
     this.authorizationService = authorizationService;
   }
 
+  /**
+   * Downloads an Excel report for a specific assignment.
+   *
+   * @param courseCode The course code.
+   * @param assignmentId The ID of the assignment.
+   * @param request The HTTP request.
+   * @return A CompletionStage containing the Result of the download operation.
+   */
   public CompletionStage<Result> downloadExcelReport(
       String courseCode, Long assignmentId, Http.Request request) {
     if (!authorizationService.isAuthorized(request, ALLOWED_ROLES)) {
@@ -45,7 +60,7 @@ public class FileExportController {
     }
 
     return exportService
-        .getAssignmentExportData(courseCode, assignmentId)
+        .getAssignmentExportData(assignmentId)
         .thenCompose(exportService::exportToExcel)
         .thenApply(
             excelBytes ->
@@ -59,6 +74,12 @@ public class FileExportController {
             });
   }
 
+  /**
+   * Downloads a student feedback report in Excel format.
+   *
+   * @param request The HTTP request containing the feedback data.
+   * @return A CompletionStage containing the Result of the download operation.
+   */
   @BodyParser.Of(BodyParser.Json.class)
   public CompletionStage<Result> downloadStudentFeedbackReport(Http.Request request) {
     if (!authorizationService.isAuthorized(request, ALLOWED_ROLES)) {
@@ -73,13 +94,36 @@ public class FileExportController {
       String email = json.get("email").asText();
       String status = json.get("status").asText();
       float averageScore = (float) json.get("averageFeedbackScore").asDouble();
+      float maxAverageFeedbackScore =
+          (float) json.get("maximumAverageFeedbackScoreForReviewTask").asDouble();
+      float overallClassAverage = (float) json.get("overallClassAverage").asDouble();
 
       ObjectMapper mapper = new ObjectMapper();
-      List<FeedbackDTO> feedbacks =
-          mapper.readerForListOf(FeedbackDTO.class).readValue(json.get("feedbacks"));
+      Map<Long, List<FeedbackDTO>> feedbacks =
+          mapper.readValue(json.get("feedbacks").toString(), new TypeReference<>() {});
+
+      List<MemberSubmissionDTO.EvaluationMatrixDTO> evaluationMatrix =
+          mapper.readValue(json.get("evaluationMatrix").toString(), new TypeReference<>() {});
+
+      Map<String, Float> classAverages =
+          mapper.readValue(json.get("classAverages").toString(), new TypeReference<>() {});
+
+      List<Float> reviewerAverages =
+          mapper.readValue(json.get("reviewerAverages").toString(), new TypeReference<>() {});
 
       return exportService
-          .exportFeedbackForStudent(feedbacks, studentName, studentId, email, status, averageScore)
+          .exportFeedbackForStudent(
+              feedbacks,
+              studentName,
+              studentId,
+              email,
+              status,
+              averageScore,
+              maxAverageFeedbackScore,
+              evaluationMatrix,
+              classAverages,
+              overallClassAverage,
+              reviewerAverages)
           .thenApply(
               fileBytes ->
                   ok(fileBytes)

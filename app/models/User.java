@@ -2,12 +2,15 @@ package models;
 
 
 import jakarta.persistence.*;
-
-import javax.validation.constraints.Pattern;
 import java.io.Serializable;
 import java.util.List;
-import java.util.Optional;
+import javax.validation.constraints.Pattern;
 
+/**
+ * User is an entity class that represents a user in the system. It contains fields for the user's ID,
+ * email, password, first name, last name, and role. The class also includes methods for getting and
+ * setting these fields.
+ */
 @Entity
 @Table(name = "users")
 public class User implements Serializable {
@@ -16,7 +19,7 @@ public class User implements Serializable {
     @Column(name="user_id", unique = true, nullable = false)
     private Long userId;
 
-    @Column(name = "email", unique = true, nullable = false, length = 100)
+    @Column(name = "email", length = 100)
     private String email;
 
     @Column(name = "password", nullable = false, columnDefinition = "TEXT")
@@ -55,6 +58,10 @@ public class User implements Serializable {
         return userId;
     }
 
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
+
     public String getEmail() {
         return email;
     }
@@ -71,6 +78,9 @@ public class User implements Serializable {
         return role;
     }
 
+    public void setRole(String role) {
+        this.role = role;}
+
     public List<Enrollment> getEnrollments() {
         return enrollments;
     }
@@ -79,11 +89,11 @@ public class User implements Serializable {
         return password;
     }
 
-    public String getUserName() {
-        return (firstName + " " + lastName).trim();
-    }
-
     public void setPassword(String hashedPassword) {
         this.password = hashedPassword;
+    }
+
+    public String getUserName() {
+        return (firstName + " " + lastName).trim();
     }
 }

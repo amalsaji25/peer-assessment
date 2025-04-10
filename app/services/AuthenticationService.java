@@ -27,6 +27,29 @@ public class AuthenticationService extends Security.Authenticator {
         this.userRepository = userRepository;
     }
 
+    public Boolean isUserIdValid(Long userId) {
+        return userRepository.findById(userId).isPresent();
+    }
+
+    public boolean setPassword(Long userId, String password) {
+        Optional<User> user = userRepository.findById(userId);
+        if(user.isPresent()){
+            String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+            user.get().setPassword(hashedPassword);
+            userRepository.updateUserPassword(user.get());
+            return true;
+        }
+        return false;
+    }
+
+    public Boolean isFirstTimeLogin(Long userId) {
+        Optional<User> user = userRepository.findById(userId);
+        if(user.isPresent()){
+            return user.get().getPassword().isEmpty() || user.get().getPassword().isBlank() || user.get().getPassword() == null;
+        }
+        return false;
+    }
+
     public Optional<User> authenticate(Long userId, String password){
         Optional<User> user = userRepository.findById(userId);
         if(user.isPresent() && BCrypt.checkpw(password, user.get().getPassword())){

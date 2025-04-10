@@ -1,6 +1,7 @@
 package repository;
 
 import models.User;
+import models.dto.Context;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,6 +24,9 @@ public class UserRepositoryTest {
 
     @Mock
     private JPAApi mockJPAApi;
+
+    @Mock
+    private Context mockContext;
 
     @Mock
     private EntityManager mockEntityManager;
@@ -90,7 +94,7 @@ public class UserRepositoryTest {
 
         doNothing().when(mockEntityManager).persist(any(User.class));
 
-        CompletionStage<Map<String, Object>> resultStage = userRepository.saveAll(users);
+        CompletionStage<Map<String, Object>> resultStage = userRepository.saveAll(users, mockContext);
         Map<String, Object> result = resultStage.toCompletableFuture().join();
 
         assertEquals(3, result.get("successCount"));
@@ -117,7 +121,7 @@ public class UserRepositoryTest {
         doNothing().when(mockEntityManager).persist(user3); // Success
 
         // Call the method
-        CompletionStage<Map<String, Object>> resultStage = userRepository.saveAll(users);
+        CompletionStage<Map<String, Object>> resultStage = userRepository.saveAll(users, mockContext);
         Map<String, Object> result = resultStage.toCompletableFuture().join();
 
         // Validate results

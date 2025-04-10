@@ -5,6 +5,8 @@ import org.apache.commons.csv.CSVRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import repository.core.Repository;
+import services.processors.record.InputRecord;
+
 import javax.inject.Singleton;
 import java.util.List;
 
@@ -12,11 +14,11 @@ import java.util.List;
 public class EnrollmentValidation implements Validations<Enrollment> {
 
     private static final Logger log = LoggerFactory.getLogger(EnrollmentValidation.class);
-    private static final List<String> MANDATORY_FIELDS = List.of("student_id", "course_code");
-    private static final List<String> EXPECTED_FIELDS_ORDER = List.of("student_id", "course_code");
+    private static final List<String> MANDATORY_FIELDS = List.of("student_id", "course_code","course_section", "term");
+    private static final List<String> EXPECTED_FIELDS_ORDER = List.of("student_id", "course_code", "course_section", "term");
 
     @Override
-    public boolean validateSyntax(CSVRecord record) {
+    public boolean validateSyntax(InputRecord record) {
         boolean isValidSyntax = MANDATORY_FIELDS.stream().allMatch(field -> record.isMapped(field) && !record.get(field).isEmpty());
 
         if (!isValidSyntax) {

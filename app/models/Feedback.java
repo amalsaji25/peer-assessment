@@ -16,7 +16,7 @@ public class Feedback implements Serializable {
     @JoinColumn(name = "review_task_id", referencedColumnName = "review_task_id", nullable = false)
     private ReviewTask reviewTask;  // The review task this feedback belongs to
 
-    @ManyToOne(optional = true)
+    @ManyToOne
     @JoinColumn(name = "feedback_question_id", referencedColumnName = "feedback_question_id", nullable = false)
     private FeedbackQuestion question;  // The feedback question being answered
 
@@ -49,6 +49,10 @@ public class Feedback implements Serializable {
 
     public String getFeedbackText() {
         return feedbackText;
+    }
+
+    public ReviewTask getReviewTask() {
+        return reviewTask;
     }
 
     public void setId(Long id) {

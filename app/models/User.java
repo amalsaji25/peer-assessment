@@ -20,7 +20,7 @@ public class User implements Serializable {
     private String email;
 
     @Column(name = "password", nullable = false, columnDefinition = "TEXT")
-    private String password;
+    private String password = "";
 
     @Column(name="first_name", nullable = false, length = 50)
     private String firstName;
@@ -32,7 +32,7 @@ public class User implements Serializable {
     @Pattern(regexp = "professor|student|admin", message = "Role must be 'professor' or 'student' or 'admin'")
     private String role;
 
-    @OneToMany(mappedBy = "student", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(mappedBy = "student")
     private List<Enrollment> enrollments;
 
     public User(){}
@@ -40,7 +40,7 @@ public class User implements Serializable {
     public User(Long userId, String email, String password, String firstName, String lastName, String role){
         this.userId = userId;
         this.email = email;
-        this.password = password;
+        this.password = (password != null) ? password : "";
         this.firstName = firstName;
         this.lastName = lastName;
         this.role = role;
@@ -81,5 +81,9 @@ public class User implements Serializable {
 
     public String getUserName() {
         return (firstName + " " + lastName).trim();
+    }
+
+    public void setPassword(String hashedPassword) {
+        this.password = hashedPassword;
     }
 }

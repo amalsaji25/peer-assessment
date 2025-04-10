@@ -21,18 +21,36 @@
         </div>
         <form id="login-form">
           <div class="login-data">
-            <label for="userId">Name:</label>
+            <label for="userId">User ID:</label>
             <input type="text" id="userId" name="userId" placeholder="Enter your user-id" required>
           </div>
 
+          <div id="continue-button-container">
+            <button type="button" id="continue-button" class="login-button">Continue</button>
+          </div>
+
+          <div id="password-container" class="login-data" style="display: none;">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" placeholder="Enter your password">
+          </div>
+
+          <div id="new-password-container" style="display: none;">
             <div class="login-data">
-              <label for="password">Password:</label>
-              <input type="password" id="password" name="password" placeholder="Enter your password" required>
+              <label for="newPassword">Create Password:</label>
+              <input type="password" id="newPassword" name="newPassword" placeholder="Create a new password">
             </div>
-            <button type = "submit" class="login-button">Submit</button>
+            <div class="login-data">
+              <label for="confirmPassword">Confirm Password:</label>
+              <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password">
+            </div>
+          </div>
+
+          <div id="submit-button-container" style="display: none;">
+            <button type="submit" class="login-button">Submit</button>
+          </div>
         </form>
         <div id="login-card-footer">
-          <p>@@2025 Peer Assessment System</p>
+          <p>©2025 Peer Assessment System</p>
         </div>
       </div>
     </div>

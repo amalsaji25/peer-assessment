@@ -3,9 +3,10 @@ package services.mappers;
 import models.Course;
 import models.Enrollment;
 import models.User;
-import org.apache.commons.csv.CSVRecord;
+import models.dto.Context;
 import repository.core.CourseRepository;
 import repository.core.UserRepository;
+import services.processors.record.InputRecord;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -23,13 +24,15 @@ public class EnrollmentEntityMapper implements EntityMapper<Enrollment>{
     }
 
     @Override
-    public Enrollment mapToEntity(CSVRecord record) {
+    public Enrollment mapToEntity(InputRecord record, Context context) {
         Long studentId = Long.valueOf(record.get("student_id").trim());
         String courseCode = record.get("course_code").trim();
+        String courseSection = record.get("course_section").trim();
+        String term = record.get("term").trim();
 
         User student = userRepository.findById(studentId).orElse(null);
-        Course course = courseRepository.findByCourseCode(courseCode).orElse(null);
+        Course course = courseRepository.findByCourseCodeAndSectionAndTerm(courseCode, courseSection, term).orElse(null);
 
-    return new Enrollment(student, course);
+    return new Enrollment(student, course, courseSection, term);
   }
 }

@@ -1,7 +1,6 @@
 package services.dashboard;
 
 import models.Assignment;
-import models.dto.AssignmentSummaryDTO;
 import models.dto.PeerReviewSummaryDTO;
 import play.mvc.Http;
 import play.mvc.Result;
@@ -44,16 +43,20 @@ public class ProfessorDashboard implements Dashboard{
             String role = request.session().get("role").get();
             String professorName = userService.getUserById(userId).get().getUserName();
             String courseCode = null;
+            String courseSection = null;
+            String term = null;
 
-            if(request.header("courseFilter").isPresent()){
-                courseCode = request.header("courseFilter").get();
+            if(request.header("courseFilter").isPresent() && request.header("termFilter").isPresent()){
+                courseCode = request.header("courseFilter").get().split(":::")[0].trim();
+                courseSection = request.header("courseFilter").get().split(":::")[1].trim();
+                term = request.header("termFilter").get();
             }
 
-            CompletableFuture<Integer> studentCountFuture = enrollmentService.getStudentCountByProfessorId(userId, courseCode);
-            CompletableFuture<Integer> assignmentCountFuture = assignmentService.getAssignmentCountByProfessorId(userId, courseCode);
-            CompletableFuture<Integer> activeCoursesFuture = courseService.getActiveCoursesByProfessorId(userId, courseCode);
-            CompletableFuture<List<Assignment>> assignmentsFuture = dashboardRepository.getAssignmentSummaryForProfessor(userId, courseCode);
-            CompletableFuture<List<PeerReviewSummaryDTO>> peerReviewAssignmentFuture = dashboardRepository.getPeerReviewProgressForProfessor(userId, courseCode);
+            CompletableFuture<Integer> studentCountFuture = enrollmentService.getStudentCountByProfessorId(userId, courseCode, courseSection, term );
+            CompletableFuture<Integer> assignmentCountFuture = assignmentService.getAssignmentCountByProfessorId(userId, courseCode, courseSection, term );
+            CompletableFuture<Integer> activeCoursesFuture = courseService.getActiveCoursesByProfessorId(userId, courseCode, courseSection, term );
+            CompletableFuture<List<Assignment>> assignmentsFuture = dashboardRepository.getAssignmentSummaryForProfessor(userId, courseCode, courseSection, term );
+            CompletableFuture<List<PeerReviewSummaryDTO>> peerReviewAssignmentFuture = dashboardRepository.getPeerReviewProgressForProfessor(userId, courseCode, courseSection, term );
 
 
             return CompletableFuture.allOf(

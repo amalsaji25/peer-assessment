@@ -1,6 +1,8 @@
 package repository;
 
+import jakarta.persistence.TypedQuery;
 import models.Course;
+import models.dto.Context;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,6 +17,7 @@ import java.util.*;
 
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -24,6 +27,9 @@ public class CourseRepositoryTest {
 
     @Mock
     private JPAApi mockJPAApi;
+
+    @Mock
+    private Context mockContext;
 
     @Mock
     private EntityManager mockEntityManager;
@@ -43,25 +49,35 @@ public class CourseRepositoryTest {
         courseRepository = new CourseRepository(mockJPAApi);
     }
 
-    /** Test that findByCourseCode returns course when found **/
+    /** Test that findByCourseCodeAndSectionAndTerm returns course when found **/
     @Test
-    public void testFindByCourseCodeShouldReturnCourseIfExists() {
-        Course expectedCourse = new Course("CS101", "Computer Science", null);
+    public void testFindByCourseCodeShouldReturnCourseIfExistsAndTerm() {
+        Course expectedCourse = new Course("CS101", "Computer Science", null, "Fall 2024", "SS", false);
 
-        when(mockEntityManager.find(Course.class, "CS101")).thenReturn(expectedCourse);
+        TypedQuery<Course> mockQuery = mock(TypedQuery.class);
 
-        Optional<Course> result = courseRepository.findByCourseCode("CS101");
+        when(mockEntityManager.createQuery(anyString(), eq(Course.class))).thenReturn(mockQuery);
+        when(mockQuery.setParameter(eq("courseCode"), eq("CS101"))).thenReturn(mockQuery);
+        when(mockQuery.setParameter(eq("term"), eq("Fall 2024"))).thenReturn(mockQuery);
+        when(mockQuery.getResultList()).thenReturn(List.of(expectedCourse));
+
+        Optional<Course> result = courseRepository.findByCourseCodeAndSectionAndTerm("CS101", "SS", "Fall 2024");
 
         assertTrue(result.isPresent());
         assertEquals("CS101", result.get().getCourseCode());
     }
 
-    /** Test that findByCourseCode returns empty if course does not exist **/
+    /** Test that findByCourseCodeAndSectionAndTerm returns empty if course does not exist **/
     @Test
-    public void testFindByCourseCodeShouldReturnEmptyIfNotExists() {
-        when(mockEntityManager.find(Course.class, "CS999")).thenReturn(null);
+    public void testFindByCourseCodeAndSectionAndTermShouldReturnEmptyIfNotExists() {
+        TypedQuery<Course> mockQuery = mock(TypedQuery.class);
 
-        Optional<Course> result = courseRepository.findByCourseCode("CS999");
+        when(mockEntityManager.createQuery(anyString(), eq(Course.class))).thenReturn(mockQuery);
+        when(mockQuery.setParameter(eq("courseCode"), eq("CS999"))).thenReturn(mockQuery);
+        when(mockQuery.setParameter(eq("term"), eq("Fall 2024"))).thenReturn(mockQuery);
+        when(mockQuery.getResultList()).thenReturn(Collections.emptyList()); // No match found
+
+        Optional<Course> result = courseRepository.findByCourseCodeAndSectionAndTerm("CS999", "SS", "Fall 2024");
 
         assertFalse(result.isPresent());
     }
@@ -70,14 +86,21 @@ public class CourseRepositoryTest {
     @Test
     public void testSaveAllShouldReturnCorrectSuccessAndFailureCounts() {
         List<Course> cours = Arrays.asList(
-                new Course("CS101", "Computer Science", null),
-                new Course("CS102", "Data Structures", null),
-                new Course("CS103", "Algorithms", null)
+                new Course("CS101", "Computer Science", null, "Fall 2024", "SS", false),
+                new Course("CS102", "Data Structures", null, "Fall 2024", "SS", false),
+                new Course("CS103", "Algorithms", null, "Fall 2024", "SS", false)
         );
 
+        // Mock the query that checks for existing courses
+        TypedQuery<Course> mockQuery = mock(TypedQuery.class);
+        when(mockEntityManager.createQuery(anyString(), eq(Course.class))).thenReturn(mockQuery);
+        when(mockQuery.setParameter(anyString(), any())).thenReturn(mockQuery);
+        when(mockQuery.getResultStream()).thenAnswer(invocation -> Stream.empty()); // simulate no existing courses
+
+        // Mock persist
         doNothing().when(mockEntityManager).persist(any(Course.class));
 
-        CompletionStage<Map<String, Object>> resultStage = courseRepository.saveAll(cours);
+        CompletionStage<Map<String, Object>> resultStage = courseRepository.saveAll(cours, mockContext);
         Map<String, Object> result = resultStage.toCompletableFuture().join();
 
         assertEquals(3, result.get("successCount"));

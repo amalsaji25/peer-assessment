@@ -2,7 +2,7 @@ package models;
 
 
 import jakarta.persistence.*;
-import models.enums.ReviewStatus;
+import models.enums.Status;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ public class ReviewTask implements Serializable {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private ReviewStatus status = ReviewStatus.PENDING;  // Default: Pending
+    private Status status = Status.PENDING;  // Default: Pending
 
     @Column(name = "group_id", nullable = false)
     private Long groupId;
@@ -46,7 +46,7 @@ public class ReviewTask implements Serializable {
 
     public ReviewTask() {}
 
-    public ReviewTask(Assignment assignment, User reviewer, User reviewee, ReviewStatus status, Long groupId, String groupName, int groupSize) {
+    public ReviewTask(Assignment assignment, User reviewer, User reviewee, Status status, Long groupId, String groupName, int groupSize) {
         this.assignment = assignment;
         this.reviewer = reviewer;
         this.reviewee = reviewee;
@@ -72,7 +72,7 @@ public class ReviewTask implements Serializable {
         return reviewee;
     }
 
-    public ReviewStatus getStatus() {
+    public Status getStatus() {
         return status;
     }
 
@@ -98,5 +98,9 @@ public class ReviewTask implements Serializable {
 
     public void setFeedbacks(List<Feedback> feedbacks) {
         this.feedbacks = feedbacks;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
     }
 }

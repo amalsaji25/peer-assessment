@@ -2,6 +2,8 @@ package repository.core;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import javax.inject.Inject;
@@ -33,6 +35,32 @@ public class FeedbackRepository {
                 return Optional.of(feedback);
             } catch (NoResultException e) {
                 return Optional.empty();
+            }
+        });
+    }
+
+    public CompletionStage<List<Feedback>> findFeedbacksReceivedByStudent(Long userId, List<String> courseCodes) {
+        return CompletableFuture.supplyAsync(() -> jpaApi.withTransaction(entityManager -> {
+            try {
+                List<Feedback> feedbacks = entityManager
+                        .createQuery(
+                                "SELECT f FROM Feedback f WHERE f.reviewTask.reviewee.userId = :userId AND f.reviewTask.assignment.course.courseCode IN :courseCodes",
+                                Feedback.class)
+                        .setParameter("userId", userId)
+                        .setParameter("courseCodes", courseCodes)
+                        .getResultList();
+                return feedbacks;
+            } catch (NoResultException e) {
+                return List.of();
+            }
+        }), executor);
+    }
+
+    public void deleteById(Long id) {
+        jpaApi.withTransaction(entityManager -> {
+            Feedback feedback = entityManager.find(Feedback.class, id);
+            if (feedback != null) {
+                entityManager.remove(feedback);
             }
         });
     }

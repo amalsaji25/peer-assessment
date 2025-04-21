@@ -1,4 +1,4 @@
-package repository;
+package repository.core;
 
 import models.User;
 import models.dto.Context;
@@ -10,7 +10,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import play.db.jpa.JPAApi;
 
 import jakarta.persistence.EntityManager;
-import repository.core.UserRepository;
 
 import java.util.*;
 import java.util.concurrent.CompletionStage;

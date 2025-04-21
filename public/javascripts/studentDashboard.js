@@ -7,8 +7,7 @@ class ApiService {
 
     static async fetchStudentDashboard(courseCode) {
         const response = await fetch(`/dashboard?courseFilter=${courseCode}`, {
-            method: "GET",
-            headers: { "courseFilter": courseCode }
+            method: "GET", headers: {"courseFilter": courseCode}
         });
         if (!response.ok) throw new Error("Failed to fetch dashboard");
         return response.text();
@@ -37,13 +36,9 @@ class UiService {
         const parser = new DOMParser();
         const newDoc = parser.parseFromString(html, "text/html");
 
-        const fields = [
-            { id: "assignment-count" },
-            { id: "pending-reviews" },
-            { id: "completed-reviews" }
-        ];
+        const fields = [{id: "assignment-count"}, {id: "pending-reviews"}, {id: "completed-reviews"}];
 
-        fields.forEach(({ id }) => {
+        fields.forEach(({id}) => {
             const newEl = newDoc.getElementById(id);
             const currEl = document.getElementById(id);
             if (newEl && currEl) currEl.textContent = newEl.textContent;
@@ -57,14 +52,11 @@ class UiService {
         const newPeerList = newDoc.querySelector(".student-peer-review-list");
         const newFeedbackList = newDoc.querySelector(".feedback-list");
 
-        if (assignmentList && newAssignmentList)
-            assignmentList.innerHTML = newAssignmentList.innerHTML;
+        if (assignmentList && newAssignmentList) assignmentList.innerHTML = newAssignmentList.innerHTML;
 
-        if (peerList && newPeerList)
-            peerList.innerHTML = newPeerList.innerHTML;
+        if (peerList && newPeerList) peerList.innerHTML = newPeerList.innerHTML;
 
-        if (feedbackList && newFeedbackList)
-            feedbackList.innerHTML = newFeedbackList.innerHTML;
+        if (feedbackList && newFeedbackList) feedbackList.innerHTML = newFeedbackList.innerHTML;
     }
 
     static showNotification(message, type = "success") {
@@ -103,6 +95,7 @@ class EventHandlers {
             UiService.showNotification("Error loading dashboard", "danger");
         }
     }
+
 }
 
 class ReviewService {
@@ -112,8 +105,8 @@ class ReviewService {
 
         const response = await fetch(`/api/review-tasks/save-submit/${reviewTaskId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', "Csrf-Token": csrfToken},
-            body: JSON.stringify({ ...formData, status })
+            headers: {'Content-Type': 'application/json', "Csrf-Token": csrfToken},
+            body: JSON.stringify({...formData, status})
         });
         if (!response.ok) throw new Error("Failed to save/submit review");
     }
@@ -137,7 +130,7 @@ class ReviewFormHandler {
 
     initEventListeners() {
         document.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('btn') && e.target.textContent.trim() === 'Start Review') {
+            if (e.target.classList.contains('btn') && ['Start Review', 'View Submission'].includes(e.target.textContent.trim())) {
                 e.preventDefault();
                 const reviewCard = e.target.closest('.card');
                 if (!reviewCard) return;
@@ -150,7 +143,7 @@ class ReviewFormHandler {
             if (this.validateForm(true)) {
                 try {
                     const formData = this.collectFormData();
-                    await ReviewService.saveOrSubmitReview(this.currentReviewTaskId, formData,'PENDING');
+                    await ReviewService.saveOrSubmitReview(this.currentReviewTaskId, formData, 'PENDING');
                     UiService.showNotification("Review saved as draft successfully", "success");
 
                     this.bsModal?.hide();
@@ -168,7 +161,7 @@ class ReviewFormHandler {
             if (this.validateForm(false)) {
                 try {
                     const formData = this.collectFormData();
-                    await ReviewService.saveOrSubmitReview(this.currentReviewTaskId, formData,'COMPLETED');
+                    await ReviewService.saveOrSubmitReview(this.currentReviewTaskId, formData, 'COMPLETED');
                     UiService.showNotification("Review submitted successfully", "success");
 
                     this.bsModal?.hide();
@@ -240,8 +233,7 @@ class ReviewFormHandler {
 
     collectFormData() {
         const formData = {
-            reviewTaskId: this.currentReviewTaskId,
-            feedbacks: []
+            reviewTaskId: this.currentReviewTaskId, feedbacks: []
         };
 
         const feedbackTextareas = this.form.querySelectorAll('.question-feedback');
@@ -251,9 +243,7 @@ class ReviewFormHandler {
             const score = marksInput ? parseFloat(marksInput.value) : 0;
 
             formData.feedbacks.push({
-                feedbackId: parseInt(feedbackId),
-                marks: isNaN(score) ? 0 : score,
-                feedback: textarea.value.trim()
+                feedbackId: parseInt(feedbackId), marks: isNaN(score) ? 0 : score, feedback: textarea.value.trim()
             });
         });
 

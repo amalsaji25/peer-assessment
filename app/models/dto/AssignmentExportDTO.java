@@ -1,5 +1,12 @@
 package models.dto;
 
+import java.util.List;
+
+/**
+ * AssignmentExportDTO is a data transfer object (DTO) that represents the data for exporting
+ * assignment information, including course details, group and student information, and feedback
+ * scores.
+ */
 public class AssignmentExportDTO {
     private String courseCode;
     private String courseName;
@@ -10,6 +17,7 @@ public class AssignmentExportDTO {
     private String studentName;
     private String status;
     private float averageFeedbackScore;
+    private List<MemberSubmissionDTO.EvaluationMatrixDTO> evaluationMatrix;
 
     public String getCourseCode() {
         return courseCode;
@@ -81,5 +89,13 @@ public class AssignmentExportDTO {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public List<MemberSubmissionDTO.EvaluationMatrixDTO> getEvaluationMatrix() {
+        return evaluationMatrix;
+    }
+
+    public void setEvaluationMatrix(List<MemberSubmissionDTO.EvaluationMatrixDTO> evaluationMatrix) {
+        this.evaluationMatrix = evaluationMatrix;
     }
 }

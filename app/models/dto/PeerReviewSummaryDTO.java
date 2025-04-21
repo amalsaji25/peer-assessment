@@ -1,10 +1,17 @@
 package models.dto;
 
+/**
+ * PeerReviewSummaryDTO is a data transfer object (DTO) that represents the summary of peer reviews
+ * for an assignment. It contains fields for the assignment title, course code, completed reviews,
+ * total reviews, progress percentage, and total student count.
+ */
 public class PeerReviewSummaryDTO {
     public String assignmentTitle;
     public String courseCode;
     public int completedReviews;
     public int totalReviews;
+    public int progressPercentage;
+    public int totalStudentCount;
 
     public int getTotalStudentCount() {
         return totalStudentCount;
@@ -13,9 +20,6 @@ public class PeerReviewSummaryDTO {
     public void setTotalStudentCount(int totalStudentCount) {
         this.totalStudentCount = totalStudentCount;
     }
-
-    public int progressPercentage;
-    public int totalStudentCount;
 
     public String getAssignmentTitle() {
         return assignmentTitle;

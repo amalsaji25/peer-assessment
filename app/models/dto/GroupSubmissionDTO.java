@@ -2,6 +2,11 @@ package models.dto;
 
 import java.util.List;
 
+/**
+ * GroupSubmissionDTO is a data transfer object (DTO) that represents the submission details of a
+ * group in an assignment. It contains fields for the group ID, group name, group size, number of
+ * reviews completed, total review tasks, private comments, and a list of members in the group.
+ */
 public class GroupSubmissionDTO {
     public Long groupId;
     public String groupName;
@@ -9,6 +14,7 @@ public class GroupSubmissionDTO {
     public int reviewsCompleted;
     public int totalReviewTasks;
     public List<MemberSubmissionDTO> members;
+    private List<FeedbackDTO> privateComments;
 
     public Long getGroupId() {
         return groupId;
@@ -56,5 +62,13 @@ public class GroupSubmissionDTO {
 
     public void setTotalReviewTasks(int totalReviewTasks) {
         this.totalReviewTasks = totalReviewTasks;
+    }
+
+    public List<FeedbackDTO> getPrivateComments() {
+        return privateComments;
+    }
+
+    public void setPrivateComments(List<FeedbackDTO> privateComments) {
+        this.privateComments = privateComments;
     }
 }

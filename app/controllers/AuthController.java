@@ -1,7 +1,14 @@
 package controllers;
 
+import static play.mvc.Results.*;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import forms.LoginForm;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import models.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,19 +20,17 @@ import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
 import services.AuthenticationService;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.Optional;
-import static play.mvc.Results.*;
 
+/**
+ * AuthController handles authentication-related actions such as login, logout, and user validation.
+ * It uses Play Framework's FormFactory for form handling and CSRF protection.
+ */
 @Singleton
 public class AuthController {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final FormFactory formFactory;
     private final AuthenticationService authenticationService;
-    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final CSRF.TokenProvider csrfTokenProvider;
     private final CSRFConfig csrfConfig;
 
@@ -37,6 +42,11 @@ public class AuthController {
         this.csrfConfig = csrfConfig;
     }
 
+    /**
+     * Validates the user by checking if the userId exists and if it's the user's first time logging in.
+     * @param request the incoming HTTP request object
+     * @return a Result indicating whether the user is valid and if it's their first time logging in
+     */
     public Result validateUser(Http.Request request) {
         JsonNode json = request.body().asJson();
         if (json == null) {
@@ -60,6 +70,11 @@ public class AuthController {
                 .put("firstTimeUser", isFirstTimeLogin));
     }
 
+    /**
+     * Creates a password for the user if the userId is valid.
+     * @param request the incoming HTTP request object
+     * @return a Result indicating whether the password was created successfully
+     */
     public Result createPassword(Http.Request request){
         JsonNode json = request.body().asJson();
         if(json == null || !json.has("userId") || !json.has("password")){
@@ -80,6 +95,13 @@ public class AuthController {
         return ok(Json.toJson(Collections.singletonMap("Password created", true)));
     }
 
+    /**
+     * Handles the login process.
+     * If the user is already authenticated, redirects to the dashboard.
+     * If not, renders the login page.
+     * @param request the incoming HTTP request object
+     * @return a Result indicating the outcome of the login process
+     */
     public Result login(Http.Request request)
     {
         String csrfCookieName = csrfConfig.cookieName().isDefined() ? csrfConfig.cookieName().get() : "No Cookie Configured";
@@ -123,6 +145,12 @@ public class AuthController {
         }
     }
 
+    /**
+     * Authenticates the user based on the provided credentials.
+     * If successful, redirects to the dashboard and sets session attributes.
+     * @param request the incoming HTTP request object
+     * @return a Result indicating the outcome of the authentication process
+     */
     public Result authenticate(Http.Request request) {
 
         // Login if session is not found for user
@@ -162,6 +190,11 @@ public class AuthController {
                         .build());
     }
 
+    /**
+     * Logs out the user by invalidating the session and redirecting to the login page.
+     * @param request the incoming HTTP request object
+     * @return a Result indicating the outcome of the logout process
+     */
     public Result logout(Http.Request request){
         log.info("Logging out.");
         log.info("User Id: {}", request.session().get("userId").orElse("NONE"));

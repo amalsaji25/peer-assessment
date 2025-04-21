@@ -3,59 +3,59 @@
 @(request: play.mvc.Http.Request)
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peer Assessment - Login</title>
-    <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/index.css")">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@@300;400;500;600;700&display=swap">
-    <meta name="csrf-token" content="@CSRF.getToken(request).map(_.value).getOrElse("")">
-  </head>
-  <body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Peer Assessment - Login</title>
+        <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/index.css")">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@@300;400;500;600;700&display=swap">
+        <meta name="csrf-token" content="@CSRF.getToken(request).map(_.value).getOrElse("")">
+    </head>
+    <body>
 
-    <div id="login-container" >
-      <div id="login-card">
-        <div id="login-card-header">
-          <h1>Peer Assessment System</h1>
-          <p>Sign in to continue</p>
-        </div>
-        <form id="login-form">
-          <div class="login-data">
-            <label for="userId">User ID:</label>
-            <input type="text" id="userId" name="userId" placeholder="Enter your user-id" required>
-          </div>
+        <div id="login-container" >
+            <div id="login-card">
+                <div id="login-card-header">
+                    <h1>Peer Assessment System</h1>
+                    <p>Sign in to continue</p>
+                </div>
+                <form id="login-form">
+                    <div class="login-data">
+                        <label for="userId">User ID:</label>
+                        <input type="text" id="userId" name="userId" placeholder="Enter your user-id" required>
+                    </div>
 
-          <div id="continue-button-container">
-            <button type="button" id="continue-button" class="login-button">Continue</button>
-          </div>
+                    <div id="continue-button-container">
+                        <button type="button" id="continue-button" class="login-button">Continue</button>
+                    </div>
 
-          <div id="password-container" class="login-data" style="display: none;">
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" placeholder="Enter your password">
-          </div>
+                    <div id="password-container" class="login-data" style="display: none;">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" placeholder="Enter your password">
+                    </div>
 
-          <div id="new-password-container" style="display: none;">
-            <div class="login-data">
-              <label for="newPassword">Create Password:</label>
-              <input type="password" id="newPassword" name="newPassword" placeholder="Create a new password">
+                    <div id="new-password-container" style="display: none;">
+                        <div class="login-data">
+                            <label for="newPassword">Create Password:</label>
+                            <input type="password" id="newPassword" name="newPassword" placeholder="Create a new password">
+                        </div>
+                        <div class="login-data">
+                            <label for="confirmPassword">Confirm Password:</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password">
+                        </div>
+                    </div>
+
+                    <div id="submit-button-container" style="display: none;">
+                        <button type="submit" class="login-button">Submit</button>
+                    </div>
+                </form>
+                <div id="login-card-footer">
+                    <p>©2025 Peer Assessment System</p>
+                </div>
             </div>
-            <div class="login-data">
-              <label for="confirmPassword">Confirm Password:</label>
-              <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password">
-            </div>
-          </div>
-
-          <div id="submit-button-container" style="display: none;">
-            <button type="submit" class="login-button">Submit</button>
-          </div>
-        </form>
-        <div id="login-card-footer">
-          <p>©2025 Peer Assessment System</p>
         </div>
-      </div>
-    </div>
 
-    <script src="@routes.Assets.versioned("javascripts/index.js")"></script>
+        <script src="@routes.Assets.versioned("javascripts/index.js")"></script>
 
-  </body>
+    </body>
 </html>

@@ -1,25 +1,29 @@
 package repository.core;
 
-import models.User;
-import models.dto.Context;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import play.db.jpa.JPAApi;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import models.User;
+import models.dto.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import play.db.jpa.JPAApi;
 
+/**
+ * UserRepository is a singleton class that handles the persistence of User entities in the database.
+ * It provides methods to find users by ID, save users in bulk, update user passwords, and find users
+ * by a list of user IDs.
+ */
 @Singleton
 public class UserRepository implements Repository<User> {
 
-    private final JPAApi jpaApi;
     private static final Logger log = LoggerFactory.getLogger(UserRepository.class);
+    private final JPAApi jpaApi;
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
 
@@ -28,6 +32,12 @@ public class UserRepository implements Repository<User> {
         this.jpaApi = jpaApi;
     }
 
+    /**
+     * Finds a user by their ID.
+     *
+     * @param userId the ID of the user to find
+     * @return an Optional containing the User object if found, or an empty Optional if not found
+     */
     public Optional<User> findById(Long userId){
         try{
              return jpaApi.withTransaction(entityManager -> {
@@ -47,6 +57,13 @@ public class UserRepository implements Repository<User> {
         }
     }
 
+    /**
+     * Saves a list of users to the database in bulk.
+     *
+     * @param users   the list of users to save
+     * @param context the context containing additional information
+     * @return a CompletionStage containing a map with success and failure counts
+     */
     @Override
     public CompletionStage<Map<String, Object>> saveAll(List<User> users, Context context) {
         log.info("Starting bulk save of users with size: {}", users.size());
@@ -87,7 +104,7 @@ public class UserRepository implements Repository<User> {
                         return response;
                     });
                 }, executorService)) // Run each batch in parallel
-                .collect(Collectors.toList());
+                .toList();
 
         // Wait for all futures to complete and aggregate results
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
@@ -113,6 +130,12 @@ public class UserRepository implements Repository<User> {
                 });
     }
 
+
+    /**
+     * Updates the password of a user in the database.
+     *
+     * @param userId the user whose password needs to be updated
+     */
     public void updateUserPassword(User userId) {
         jpaApi.withTransaction(entityManager -> {
             try {
@@ -130,6 +153,12 @@ public class UserRepository implements Repository<User> {
         });
     }
 
+    /**
+     * Finds all users by a list of user IDs.
+     *
+     * @param list the list of user IDs to find
+     * @return a list of User objects
+     */
     public List<User> findAllByUserIds(List<Long> list) {
         return jpaApi.withTransaction(entityManager -> {
             List<User> users = entityManager.createQuery("SELECT u FROM User u WHERE u.userId IN :userIds", User.class)

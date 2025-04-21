@@ -2,12 +2,19 @@ package models;
 
 
 import jakarta.persistence.*;
-import models.enums.Status;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import models.enums.Status;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
+/**
+ * ReviewTask is an entity class that represents a review task in the system. It contains fields for
+ * the review task's ID, the assignment it belongs to, the reviewer and reviewee, the status of the
+ * review, and the group information. The class also includes methods for getting and setting these
+ * fields.
+ */
 @Entity
 @Table(name = "review_tasks")
 public class ReviewTask implements Serializable {
@@ -18,6 +25,7 @@ public class ReviewTask implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "assignment_id", referencedColumnName = "assignment_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Assignment assignment;  // The assignment this review belongs to
 
     @ManyToOne
@@ -44,9 +52,12 @@ public class ReviewTask implements Serializable {
     @OneToMany(mappedBy = "reviewTask", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Feedback> feedbacks = new ArrayList<>();
 
+    @Column(name = "review_task_for_professor", nullable = false)
+    private boolean reviewTaskForProfessor = false;
+
     public ReviewTask() {}
 
-    public ReviewTask(Assignment assignment, User reviewer, User reviewee, Status status, Long groupId, String groupName, int groupSize) {
+    public ReviewTask(Assignment assignment, User reviewer, User reviewee, Status status, Long groupId, String groupName, int groupSize, boolean reviewTaskForProfessor) {
         this.assignment = assignment;
         this.reviewer = reviewer;
         this.reviewee = reviewee;
@@ -54,6 +65,7 @@ public class ReviewTask implements Serializable {
         this.groupId = groupId;
         this.groupName = groupName;
         this.groupSize = groupSize;
+        this.reviewTaskForProfessor = reviewTaskForProfessor;
     }
 
     public Long getReviewTaskId() {
@@ -62,6 +74,10 @@ public class ReviewTask implements Serializable {
 
     public Assignment getAssignment() {
         return assignment;
+    }
+
+    public void setAssignment(Assignment assignment) {
+        this.assignment = assignment;
     }
 
     public User getReviewer() {
@@ -76,6 +92,10 @@ public class ReviewTask implements Serializable {
         return status;
     }
 
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
     public int getGroupSize() {
         return groupSize;
     }
@@ -88,10 +108,6 @@ public class ReviewTask implements Serializable {
         return groupId;
     }
 
-    public void setAssignment(Assignment assignment) {
-        this.assignment = assignment;
-    }
-
     public List<Feedback> getFeedbacks() {
         return feedbacks;
     }
@@ -100,7 +116,7 @@ public class ReviewTask implements Serializable {
         this.feedbacks = feedbacks;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public boolean isReviewTaskForProfessor() {
+        return reviewTaskForProfessor;
     }
 }

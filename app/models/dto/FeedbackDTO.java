@@ -1,5 +1,10 @@
 package models.dto;
 
+/**
+ * FeedbackDTO is a data transfer object (DTO) that represents feedback information for an assignment.
+ * It contains fields for the feedback ID, maximum score, obtained score, feedback text, question text,
+ * reviewer ID, and reviewer name.
+ */
 public class FeedbackDTO {
     private Long feedbackId;
     private int maxScore;
@@ -11,7 +16,9 @@ public class FeedbackDTO {
 
     public FeedbackDTO() {}
 
-    public FeedbackDTO(int maxScore, String feedbackText, String questionText, Long reviewerId, String reviewerName) {
+    public FeedbackDTO(Long feedbackId, int obtainedScore, int maxScore, String feedbackText, String questionText, Long reviewerId, String reviewerName) {
+        this.feedbackId = feedbackId;
+        this.obtainedScore = obtainedScore;
         this.maxScore = maxScore;
         this.feedbackText = feedbackText;
         this.questionText = questionText;
@@ -57,6 +64,10 @@ public class FeedbackDTO {
 
     public String getReviewerName() {
         return reviewerName;
+    }
+
+    public void setReviewerName(String reviewerName) {
+        this.reviewerName = reviewerName;
     }
 
     public Long getFeedbackId() {

@@ -1,23 +1,25 @@
 package repository.core;
 
 import jakarta.persistence.TypedQuery;
+import java.util.*;
+import java.util.concurrent.*;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import models.Enrollment;
 import models.dto.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import play.db.jpa.JPAApi;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
-
+/**
+ * EnrollmentRepository is a singleton class that handles the persistence of Enrollment entities in
+ * the database. It provides methods to save, retrieve, and query enrollments.
+ */
 @Singleton
 public class EnrollmentRepository implements Repository<Enrollment> {
 
-    private final JPAApi jpaApi;
     private static final Logger log = LoggerFactory.getLogger(EnrollmentRepository.class);
+    private final JPAApi jpaApi;
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
     @Inject
@@ -26,7 +28,10 @@ public class EnrollmentRepository implements Repository<Enrollment> {
     }
 
     /**
-     * Bulk save enrollments using batch processing.
+     * Saves a single enrollment to the database.
+     * @param enrollments enrollment object to be saved
+     * @param context context object containing course information
+     * @return a CompletableFuture containing the saved enrollment object
      */
     @Override
     public CompletionStage<Map<String, Object>> saveAll(List<Enrollment> enrollments, Context context) {
@@ -59,6 +64,14 @@ public class EnrollmentRepository implements Repository<Enrollment> {
         });
     }
 
+    /**
+     * Retrieves all enrollments from the database for a given course code, course section, term and professor ID. To find the enrollment count for a specific professor, course code, course section, and term.
+     * @param professorId the ID of the professor
+     * @param courseCode the course code
+     * @param courseSection the course section
+     * @param term the term
+     * @return a CompletableFuture containing the count of enrollments
+     */
     public CompletableFuture<Integer> getStudentCountByProfessorId(Long professorId, String courseCode, String courseSection, String term) {
     return CompletableFuture.supplyAsync(
         () ->
@@ -94,6 +107,11 @@ public class EnrollmentRepository implements Repository<Enrollment> {
         executorService);
     }
 
+    /**
+     * Retrieves all enrollments from the database for a given course code, course section, term and student ID.
+     * @param userId the ID of the student
+     * @return  a CompletableFuture containing a list of course codes
+     */
     public CompletableFuture<List<String>> findCourseCodesByStudentId(Long userId){
         return CompletableFuture.supplyAsync(
                 () ->
@@ -108,6 +126,11 @@ public class EnrollmentRepository implements Repository<Enrollment> {
         );
     }
 
+    /**
+     * Retrieves all enrollments from the database for a given course code, course section, term and student ID.
+     * @param userId the ID of the student
+     * @return  a CompletableFuture containing a list of maps with course code and course name
+     */
     public CompletableFuture<List<Map<String,String>>> findEnrolledCoursesForStudentId(Long userId){
         return CompletableFuture.supplyAsync(
                 () ->
@@ -131,6 +154,12 @@ public class EnrollmentRepository implements Repository<Enrollment> {
         );
     }
 
+    /**
+     * Checks if a student is enrolled in a specific course.
+     * @param userId the ID of the student
+     * @param courseCode the course code
+     * @return a CompletableFuture containing true if the student is enrolled, false otherwise
+     */
     public CompletableFuture<Boolean> isStudentEnrolledInCourse(Long userId, String courseCode){
         return CompletableFuture.supplyAsync(
                 () ->
@@ -147,6 +176,14 @@ public class EnrollmentRepository implements Repository<Enrollment> {
 
     }
 
+    /**
+     * Retrieves all enrollments from the database for a given course code, course section, term and student ID.
+     * @param userIds the IDs of the students
+     * @param courseCode the course code
+     * @param courseSection the course section
+     * @param term the term
+     * @return a list of enrollments
+     */
     public List<Enrollment> getEnrollmentsByCompositeIndex(
             List<Long> userIds, String courseCode, String courseSection, String term) {
         return jpaApi.withTransaction(entityManager -> {

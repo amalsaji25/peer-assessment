@@ -7,11 +7,27 @@ lazy val root = (project in file(".")).enablePlugins(PlayJava, JacocoPlugin)
 
 scalaVersion := "2.13.16"
 
-// JaCoCo settings
-jacocoReportSettings := JacocoReportSettings(
-  title = "JaCoCo Coverage Report",
-  formats = Seq(JacocoReportFormats.HTML, JacocoReportFormats.XML)
+// ignore classes matching these patterns
+jacocoExcludes := Seq(
+  "views.*",
+  "forms.*",
+  "models.*",
+  "exceptions.*",
+  "modules.*",
+  "factory.*",
+  "authorization.*",
+  "controllers.javascript.*",
+  "services.dashboard.*",
+  "*Routes*",          // generated classes under test
+  "*ReverseRoutes*",
+  "*Reverse*Controller*",// generated classes under test
+  "*javascript*"       // generated classes under test
 )
+
+// JaCoCo settings
+jacocoReportSettings := JacocoReportSettings()
+  .withTitle("Code Coverage Report")
+  .withFormats(JacocoReportFormats.HTML, JacocoReportFormats.XML)
 
 // Define Dependencies
 libraryDependencies ++= Seq(
@@ -35,7 +51,7 @@ libraryDependencies ++= Seq(
   "org.apache.commons" % "commons-csv" % "1.13.0",
 
   // Reporting
-  "org.apache.poi" % "poi-ooxml" % "5.2.3" exclude("org.apache.logging.log4j", "log4j-api"),
+  "org.apache.poi" % "poi-ooxml" % "5.2.3",
 
   // Testing Dependencies
   "org.mockito" % "mockito-core" % "5.3.1" % Test,

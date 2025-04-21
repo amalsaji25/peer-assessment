@@ -1,5 +1,11 @@
 package repository.core;
 
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import javax.inject.Inject;
 import models.Assignment;
 import models.Course;
 import models.Feedback;
@@ -12,17 +18,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import play.db.jpa.JPAApi;
 
-import javax.inject.Inject;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
+/**
+ * ReviewTaskRepository is a singleton class that handles the persistence of ReviewTask entities in
+ * the database. It provides methods to save review tasks, find review tasks by assignment ID, and
+ * update feedback for review tasks.
+ */
 public class ReviewTaskRepository implements Repository<ReviewTask> {
 
-    private final JPAApi jpaApi;
     private static final Logger log = LoggerFactory.getLogger(ReviewTaskRepository.class);
+    private final JPAApi jpaApi;
     private final ExecutorService executor = Executors.newFixedThreadPool(5);
 
 
@@ -31,6 +35,13 @@ public class ReviewTaskRepository implements Repository<ReviewTask> {
         this.jpaApi = jpaApi;
     }
 
+    /**
+     * Saves a list of review tasks to the database.
+     *
+     * @param reviewTasks the list of review tasks to be saved
+     * @param context     the context containing additional information
+     * @return a CompletionStage containing a map with success and failure counts
+     */
     @Override
     public CompletionStage<Map<String, Object>> saveAll(List<ReviewTask> reviewTasks, Context context) {
         String courseCode = context.getCourseCode();
@@ -65,15 +76,31 @@ public class ReviewTaskRepository implements Repository<ReviewTask> {
                         // Link assignment to each review task
                         reviewTasks.forEach(reviewTask -> {
                             reviewTask.setAssignment(assignment);
-
-                            List<Feedback> feedbacks = assignment.getFeedbackQuestions().stream().map(question -> {
-                                Feedback feedback = new Feedback();
-                                feedback.setQuestion(question);
-                                feedback.setReviewTask(reviewTask);
-                                feedback.setScore(0);
-                                feedback.setFeedbackText("");
-                                return feedback;
-                            }).toList();
+                            List<Feedback> feedbacks = new ArrayList<>();
+                            if(!reviewTask.isReviewTaskForProfessor()){
+                                feedbacks = assignment.getFeedbackQuestions().stream()
+                                        .filter(feedbackQuestion -> !feedbackQuestion.getQuestionText().equalsIgnoreCase("Private Comment for Professor"))
+                                        .map(question -> {
+                                    Feedback feedback = new Feedback();
+                                    feedback.setQuestion(question);
+                                    feedback.setReviewTask(reviewTask);
+                                    feedback.setScore(0);
+                                    feedback.setFeedbackText("");
+                                    return feedback;
+                                }).toList();
+                            }
+                            else{
+                                feedbacks = assignment.getFeedbackQuestions().stream()
+                                        .filter(feedbackQuestion -> feedbackQuestion.getQuestionText().equalsIgnoreCase("Private Comment for Professor"))
+                                        .map(question -> {
+                                            Feedback feedback = new Feedback();
+                                            feedback.setQuestion(question);
+                                            feedback.setReviewTask(reviewTask);
+                                            feedback.setScore(0);
+                                            feedback.setFeedbackText("");
+                                            return feedback;
+                                        }).toList();
+                            }
                             reviewTask.setFeedbacks(feedbacks);
                         });
 
@@ -103,6 +130,12 @@ public class ReviewTaskRepository implements Repository<ReviewTask> {
         }, executor);
     }
 
+    /**
+     * Finds review tasks by assignment ID.
+     *
+     * @param assignmentId the ID of the assignment
+     * @return an Optional containing a list of ReviewTask objects if found, or an empty Optional if not found
+     */
     public Optional<List<ReviewTask>> findByAssignmentId(Long assignmentId) {
         try{
             return jpaApi.withTransaction(entityManager -> {
@@ -124,7 +157,12 @@ public class ReviewTaskRepository implements Repository<ReviewTask> {
         }
     }
 
-
+    /**
+     * Finds review tasks by assignment ID and status.
+     * @param userId the ID of the user
+     * @param status the status of the review task
+     * @return a CompletableFuture containing the count of review tasks
+     */
     public CompletableFuture<Integer> findReviewCountByStudentIdAndStatus(Long userId, Status status) {
         return CompletableFuture.supplyAsync(() -> jpaApi.withTransaction(entityManager -> {
             String queryString = "SELECT COUNT(rt) FROM ReviewTask rt WHERE rt.reviewer.userId = :userId AND rt.status = :status";
@@ -136,6 +174,14 @@ public class ReviewTaskRepository implements Repository<ReviewTask> {
         }), executor);
     }
 
+    /**
+     * Finds review tasks by student ID and status for a specific course.
+     *
+     * @param userId the ID of the student
+     * @param courseCode the course code
+     * @param status the status of the review task
+     * @return a CompletableFuture containing the count of review tasks
+     */
     public CompletableFuture<Integer> findReviewCountByStudentIdAndStatusForCourse(Long userId, String courseCode, Status status) {
         return CompletableFuture.supplyAsync(() -> jpaApi.withTransaction(entityManager -> {
             String queryString = "SELECT COUNT(rt) FROM ReviewTask rt WHERE rt.reviewer.userId = :userId AND rt.status = :status AND rt.assignment.course.courseCode = :courseCode";
@@ -148,6 +194,11 @@ public class ReviewTaskRepository implements Repository<ReviewTask> {
         }), executor);
     }
 
+    /**
+     * Saves feedback for review tasks.
+     *
+     * @param reviewTaskDTO the DTO containing review task and feedback information
+     */
     public void saveReviewTaskFeedback(ReviewTaskDTO reviewTaskDTO) {
         jpaApi.withTransaction(entityManager -> {
 

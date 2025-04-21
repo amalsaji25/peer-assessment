@@ -1,4 +1,4 @@
-package repository;
+package repository.core;
 
 import models.Course;
 import models.Enrollment;
@@ -12,15 +12,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 import play.db.jpa.JPAApi;
 
 import jakarta.persistence.EntityManager;
-import repository.core.EnrollmentRepository;
 
 import java.util.*;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EnrollmentRepositoryTest {

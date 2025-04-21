@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     // Sidebar toggle functionality
     const sidebar = document.getElementById('sidebar');
     const content = document.getElementById('content');
@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Close sidebar when clicking on overlay (mobile)
     if (overlay) {
-        overlay.addEventListener('click', function() {
+        overlay.addEventListener('click', function () {
             if (sidebar.classList.contains('show')) {
                 toggleSidebar();
             }
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Course filter functionality
     const courseFilter = document.getElementById('course-filter');
     if (courseFilter) {
-        courseFilter.addEventListener('change', function() {
+        courseFilter.addEventListener('change', function () {
             const selectedCourse = this.value;
             const assignmentCards = document.querySelectorAll('.assignment-card');
 
@@ -94,7 +94,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // Helper function to show toast notifications
-    window.showToast = function(message, type = "info") {
+    window.showToast = function (message, type = "info") {
         const toastContainer = document.createElement("div");
         toastContainer.className = "position-fixed top-0 end-0 p-3";
         toastContainer.style.zIndex = "1050";
@@ -120,8 +120,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // Initialize Bootstrap's toast
         const bootstrap = window.bootstrap;
         const toast = new bootstrap.Toast(toastEl, {
-            autohide: true,
-            delay: 3000
+            autohide: true, delay: 3000
         });
 
         toast.show();

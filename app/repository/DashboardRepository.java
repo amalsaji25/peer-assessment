@@ -23,6 +23,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+/**
+ * DashboardRepository is a singleton class that handles the retrieval of assignment and peer review
+ * data for professors and students. It provides methods to get peer review progress, assignment
+ * summaries, and pending peer reviews.
+ */
 @Singleton
 public class DashboardRepository {
     private final JPAApi jpaApi;
@@ -35,6 +40,15 @@ public class DashboardRepository {
     }
 
 
+    /**
+     * Retrieves the peer review progress for a professor based on the provided filters.
+     *
+     * @param userId          The ID of the professor.
+     * @param filterByCourseCode The course code to filter by (optional).
+     * @param courseSection   The course section to filter by (optional).
+     * @param term           The term to filter by (optional).
+     * @return A CompletableFuture containing a list of PeerReviewSummaryDTO objects.
+     */
     public CompletableFuture<List<PeerReviewSummaryDTO>> getPeerReviewProgressForProfessor(Long userId, String filterByCourseCode, String courseSection, String term) {
         return CompletableFuture.supplyAsync(()->jpaApi.withTransaction(entityManger -> {
 
@@ -119,6 +133,16 @@ public class DashboardRepository {
 
     }
 
+
+    /**
+     * Retrieves the assignment summary for a professor based on the provided filters.
+     *
+     * @param userId          The ID of the professor.
+     * @param filterByCourseCode The course code to filter by (optional).
+     * @param courseSection   The course section to filter by (optional).
+     * @param term           The term to filter by (optional).
+     * @return A CompletableFuture containing a list of Assignment objects.
+     */
     public CompletableFuture<List<Assignment>> getAssignmentSummaryForProfessor(Long userId, String filterByCourseCode, String courseSection, String term) {
         return CompletableFuture.supplyAsync(()->jpaApi.withTransaction(entityManager -> {
 
@@ -164,6 +188,14 @@ public class DashboardRepository {
         }), executor);
     }
 
+
+    /**
+     * Retrieves the assignments for a student based on the provided course code.
+     *
+     * @param userId    The ID of the student.
+     * @param courseCode The course code to filter by (optional).
+     * @return A CompletableFuture containing a list of Assignment objects.
+     */
     public CompletableFuture<List<Assignment>> getAssignmentsForStudent(Long userId, String courseCode) {
         return CompletableFuture.supplyAsync(() -> jpaApi.withTransaction(entityManager -> {
             if (courseCode == null || courseCode.equalsIgnoreCase("all")) {
@@ -194,6 +226,14 @@ public class DashboardRepository {
         }), executor);
     }
 
+
+    /**
+     * Retrieves the pending peer reviews for a student based on the provided course code.
+     *
+     * @param userId    The ID of the student.
+     * @param courseCode The course code to filter by (optional).
+     * @return A CompletableFuture containing a list of ReviewTaskDTO objects.
+     */
     public CompletableFuture<List<ReviewTaskDTO>> getPendingPeerReviewsForStudent(Long userId, String courseCode) {
         return CompletableFuture.supplyAsync(() -> jpaApi.withTransaction(entityManager -> {
 
@@ -213,7 +253,6 @@ public class DashboardRepository {
                 reviewTasks = entityManager.createQuery(
                                 "SELECT rt FROM ReviewTask rt " +
                                         "WHERE rt.reviewer.userId = :userId " +
-                                        "AND rt.status = models.enums.Status.PENDING " +
                                         "AND rt.assignment.course.courseCode IN :courseCodes", ReviewTask.class)
                         .setParameter("userId", userId)
                         .setParameter("courseCodes", enrolledCourses)
@@ -252,7 +291,8 @@ public class DashboardRepository {
                                 rt.getAssignment().getTitle(),
                                 rt.getReviewee().getUserName(),
                                 rt.getStatus(),
-                                feedbacks);
+                                feedbacks,
+                                rt.isReviewTaskForProfessor());
                     }).toList();
         }), executor);
     }

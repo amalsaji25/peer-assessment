@@ -16,6 +16,7 @@ public class AssignmentEditDTO {
     public String description;
     public String courseSection;
     public String term;
+    public String status;
     public List<ReviewQuestionDTO> reviewQuestions;
 
     public Long getAssignmentId() {
@@ -88,6 +89,10 @@ public class AssignmentEditDTO {
 
     public void setTerm(String term) {
         this.term = term;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public static class ReviewQuestionDTO {

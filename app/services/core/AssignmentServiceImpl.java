@@ -67,6 +67,7 @@ public class AssignmentServiceImpl implements AssignmentService {
     assignmentEditDTO.setCourseCode(assignment.getCourse().getCourseCode());
     assignmentEditDTO.setCourseSection(assignment.getCourse().getCourseSection());
     assignmentEditDTO.setTerm(assignment.getCourse().getTerm());
+    assignmentEditDTO.setStatus(assignment.getStatus().toLowerCase());
     return assignmentEditDTO;
   }
 
@@ -153,12 +154,14 @@ public class AssignmentServiceImpl implements AssignmentService {
               feedbackQuestions.add(feedbackQuestion);
             });
 
-    // Overall Feedback Comment
-    FeedbackQuestion overAllFeedbackComment = new FeedbackQuestion();
-    overAllFeedbackComment.setQuestionText("Overall Feedback Comment");
-    overAllFeedbackComment.setMaxMarks(0);
-    overAllFeedbackComment.setAssignment(assignment);
-    feedbackQuestions.add(overAllFeedbackComment);
+    // Overall Feedback Comment to be included in the feedback questions only if there is no existing one (reuse scenario)
+    if(feedbackQuestions.stream().noneMatch(q -> q.getQuestionText().equals("Overall Feedback Comment"))) {
+      FeedbackQuestion overAllFeedbackComment = new FeedbackQuestion();
+      overAllFeedbackComment.setQuestionText("Overall Feedback Comment");
+      overAllFeedbackComment.setMaxMarks(0);
+      overAllFeedbackComment.setAssignment(assignment);
+      feedbackQuestions.add(overAllFeedbackComment);
+    }
 
     // private Feedback Comment for Professor
     FeedbackQuestion professorFeedbackComment = new FeedbackQuestion();
@@ -270,6 +273,11 @@ public class AssignmentServiceImpl implements AssignmentService {
 
           assignmentEditDTO.reviewQuestions =
               assignment.getFeedbackQuestions().stream()
+                  .filter(
+                      feedbackQuestion ->
+                          !feedbackQuestion
+                              .getQuestionText()
+                              .equals("Private Comment for Professor"))
                   .map(
                       feedbackQuestion -> {
                         AssignmentEditDTO.ReviewQuestionDTO reviewQuestionDTO =
@@ -349,6 +357,19 @@ public class AssignmentServiceImpl implements AssignmentService {
 
           // Handle deletions
           if (!existingFeedbackQuestions.isEmpty()) {
+
+            // Add Private Comment for Professor to the list of updated feedback questions & remove
+            // it from the existing ones
+            FeedbackQuestion privateCommentQuestion =
+                existingFeedbackQuestions.values().stream()
+                    .filter(q -> q.getQuestionText().equals("Private Comment for Professor"))
+                    .findFirst()
+                    .orElse(null);
+            if (privateCommentQuestion != null) {
+              updatedFeedbackQuestions.add(privateCommentQuestion);
+              existingFeedbackQuestions.remove(privateCommentQuestion.getQuestionId());
+            }
+
             // 1. Collect IDs of removed questions
             Set<Long> removedQuestionIds =
                 existingFeedbackQuestions.values().stream()

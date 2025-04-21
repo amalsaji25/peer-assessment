@@ -66,8 +66,11 @@ public class ReviewTaskServiceImpl implements ReviewTaskService {
                       ? 0
                       : (int) Math.round((completedMembers * 100.0) / totalMembers);
 
+              int totalStudents =
+                  groupDTOs.stream().mapToInt(GroupSubmissionDTO::getGroupSize).sum();
+
               SubmissionOverviewDTO dto = new SubmissionOverviewDTO();
-              dto.setTotalSubmissions(reviewTasks.size());
+              dto.setTotalSubmissions(totalStudents);
               dto.setReviewsCompleted(percentageCompleted);
               dto.setGroups(groupDTOs);
 

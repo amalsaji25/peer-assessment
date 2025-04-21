@@ -42,6 +42,16 @@ public class StudentDashboard implements Dashboard {
     this.dashboardRepository = dashboardRepository;
   }
 
+    /**
+     * Converts a Java List to a Scala immutable List.
+     * @param javaList the Java List to convert
+     * @return the converted Scala immutable List
+     * @param <T> the type of elements in the list
+     */
+    private static <T> scala.collection.immutable.List<T> toScalaImmutableList(java.util.List<T> javaList) {
+        return scala.jdk.javaapi.CollectionConverters.asScala(javaList).toList();
+    }
+
   /**
    * Retrieves the student dashboard view for a given HTTP request. From the request, it extracts
    * the user's role and renders the corresponding dashboard view.
@@ -96,9 +106,9 @@ public class StudentDashboard implements Dashboard {
                             assignmentCount,
                             pendingReviews,
                             completedReviews,
-                            assignments,
-                            peerReviews,
-                            myReviews));
+                            toScalaImmutableList(assignments),
+                            toScalaImmutableList(peerReviews),
+                            toScalaImmutableList(myReviews)));
                   })
               .join();
         });

@@ -36,32 +36,32 @@ public class EnrollmentServiceImplTest {
 
     @Test
     public void testFindStudentEnrolledCourseCodes_All_ReturnsAllCourses() {
-        List<String> mockCourses = List.of("CS101", "CS102");
+        List<Long> mockCourses = List.of(1L, 2L);
         when(enrollmentRepository.findCourseCodesByStudentId(2L))
                 .thenReturn(CompletableFuture.completedFuture(mockCourses));
 
-        List<String> result = enrollmentService.findStudentEnrolledCourseCodes(2L, "all").join();
+        List<Long> result = enrollmentService.findStudentEnrolledCourseCodes(2L, "all").join();
 
         assertEquals(2, result.size());
-        assertTrue(result.contains("CS101"));
+        assertTrue(result.contains(1L));
     }
 
     @Test
     public void testFindStudentEnrolledCourseCodes_EnrolledInCourse_ReturnsCourse() {
         when(enrollmentRepository.isStudentEnrolledInCourse(3L, "CS105"))
-                .thenReturn(CompletableFuture.completedFuture(true));
+                .thenReturn(CompletableFuture.completedFuture(Optional.of(105L)));
 
-        List<String> result = enrollmentService.findStudentEnrolledCourseCodes(3L, "CS105").join();
+        List<Long> result = enrollmentService.findStudentEnrolledCourseCodes(3L, "CS105").join();
 
-        assertEquals(List.of("CS105"), result);
+        assertEquals(List.of(105L), result);
     }
 
     @Test
     public void testFindStudentEnrolledCourseCodes_NotEnrolledInCourse_ReturnsEmptyList() {
         when(enrollmentRepository.isStudentEnrolledInCourse(3L, "CS105"))
-                .thenReturn(CompletableFuture.completedFuture(false));
+                .thenReturn(CompletableFuture.completedFuture(Optional.empty()));
 
-        List<String> result = enrollmentService.findStudentEnrolledCourseCodes(3L, "CS105").join();
+        List<Long> result = enrollmentService.findStudentEnrolledCourseCodes(3L, "CS105").join();
 
         assertTrue(result.isEmpty());
     }

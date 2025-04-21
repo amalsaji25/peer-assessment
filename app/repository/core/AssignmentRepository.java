@@ -267,19 +267,19 @@ public class AssignmentRepository {
   /**
    * Asynchronous method to find the count of assignments for a list of course codes.
    *
-   * @param courseCodes The list of course codes.
+   * @param courseIds The list of course codes.
    * @return A CompletableFuture containing the count of assignments.
    */
-  public CompletableFuture<Integer> findAssignmentCountByCourseCodes(List<String> courseCodes) {
+  public CompletableFuture<Integer> findAssignmentCountByCourseCodes(List<Long> courseIds) {
     return CompletableFuture.supplyAsync(
         () ->
             jpaApi.withTransaction(
                 entityManager -> {
                   TypedQuery<Long> query =
                       entityManager.createQuery(
-                          "SELECT COUNT(a) FROM Assignment a WHERE a.course.courseCode IN :courseCodes",
+                          "SELECT COUNT(a) FROM Assignment a WHERE a.course.courseId IN :courseIds AND a.startDate <= CURRENT_DATE",
                           Long.class);
-                  query.setParameter("courseCodes", courseCodes);
+                  query.setParameter("courseIds", courseIds);
                   return query.getSingleResult().intValue();
                 }),
         executorService);

@@ -1,3 +1,4 @@
+@import scala.collection.immutable.List
 @import models.dto.{FeedbacksReceivedDTO, ReviewTaskDTO}
 @(request: play.mvc.Http.Request, studentName: String, studentRole: String,
         assignmentCount: Int, pendingReviews: Int,
@@ -67,7 +68,7 @@
                             <i class="bi bi-file-earmark-text text-primary fs-4"></i>
                         </div>
                         <div>
-                            <h3 class="h2 mb-1">@assignmentCount</h3>
+                            <h3 class="h2 mb-1" id="assignment-count">@assignmentCount</h3>
                             <p class="text-muted mb-0">Assignments</p>
                         </div>
                     </div>
@@ -80,7 +81,7 @@
                             <i class="bi bi-clock text-primary fs-4"></i>
                         </div>
                         <div>
-                            <h3 class="h2 mb-1">@pendingReviews</h3>
+                            <h3 class="h2 mb-1" id="pending-reviews">@pendingReviews</h3>
                             <p class="text-muted mb-0">Pending Reviews</p>
                         </div>
                     </div>
@@ -93,7 +94,7 @@
                             <i class="bi bi-check-circle text-primary fs-4"></i>
                         </div>
                         <div>
-                            <h3 class="h2 mb-1">@completedReviews</h3>
+                            <h3 class="h2 mb-1" id="completed-reviews">@completedReviews</h3>
                             <p class="text-muted mb-0">Completed Reviews</p>
                         </div>
                     </div>
@@ -129,14 +130,20 @@
                                                 <small class="text-muted">Due: @assignment.getDueDate</small>
                                             </div>
                                             @defining(
-                                                peerReviews
-                                                .find(_.getAssignmentId == assignment.getAssignmentId)
-                                                .map(_.getReviewStatus.name().toLowerCase.capitalize)
-                                                .getOrElse("Not Started")
+                                                {
+                                                    val reviewOpt = peerReviews.find(_.getAssignmentId == assignment.getAssignmentId)
+                                                    val dueDate = assignment.getDueDate
+                                                    val today = java.time.LocalDate.now
+                                                    val status = reviewOpt.map(_.getReviewStatus.name()).getOrElse("NOT_STARTED")
+
+                                                    if (status == "PENDING" && dueDate.isBefore(today)) "Missed"
+                                                    else status.toLowerCase.capitalize
+                                                }
                                             ) { statusText =>
                                                 @defining(statusText match {
                                                     case "Pending" => "text-danger bg-danger bg-opacity-10"
                                                     case "Completed" => "text-success bg-success bg-opacity-10"
+                                                    case "Missed" => "text-danger bg-danger bg-opacity-10"
                                                     case _ => "text-secondary bg-secondary bg-opacity-10"
                                                 }) { badgeClass =>
                                                     <span class="@("badge fw-medium rounded px-3 py-2 " + badgeClass)">@statusText</span>
@@ -156,10 +163,6 @@
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white py-3">
                         <h2 class="h5 mb-0">Peer Reviews Assigned to Me</h2>
-                        <select id="review-status-filter" class="form-select form-select-sm" style="width: auto">
-                            <option value="PENDING" selected>Pending Reviews</option>
-                            <option value="COMPLETED">Completed Reviews</option>
-                        </select>
                     </div>
                     <div class="card-body p-3 overflow-auto" style="max-height: 400px;">
                         <div class="student-peer-review-list">
@@ -173,18 +176,32 @@
                                     <div class="card-body p-3">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <h3 class="h6 mb-1">@review.getAssignmentName</h3>
+                                                <h3 class="h6 mb-1">
+                                                    @review.getAssignmentName
+                                                    @if(review.isReviewTaskForProfessor()) {
+                                                        (Private Comment for Professor)
+                                                    }
+                                                </h3>
                                                 <p class="mb-1 small">
                                                     <span class="fw-medium">@review.getRevieweeName</span> •
                                                     <span class="ms-1">@review.getCourseCode</span>
                                                 </p>
                                                 <small class="text-muted">Due: @review.getDueDate</small>
                                             </div>
-                                            <a href="#" class="btn btn-primary btn-sm">
-                                            @if(review.getReviewStatus.name() == "COMPLETED") {
-                                                View Submission
-                                            } else {
-                                                Start Review
+                                            @defining({
+                                                val status = review.getReviewStatus.name().toUpperCase
+                                                val dueDate = review.getDueDate
+                                                val today = java.time.LocalDate.now
+
+                                                (status, dueDate, today)
+                                            }) { case (status, dueDate, today) =>
+                                                @if(status == "COMPLETED") {
+                                                    <a href="#" class="btn btn-primary btn-sm">View Submission</a>
+                                                } else if (status == "PENDING" && !dueDate.isBefore(today)) {
+                                                <a href="#" class="btn btn-primary btn-sm">Start Review</a>
+                                                } else {
+                                                <button class="btn btn-outline-danger btn-sm" disabled title="Deadline has passed">Missed</button>
+                                                }
                                             }
                                             </a>
                                         </div>
@@ -198,10 +215,7 @@
                                             <div class="mb-3">
                                                 <label class="form-label fw-medium">
                                                     Private Feedback Comment for Professor</label>
-                                                <textarea class="form-control question-feedback mb-3" name="feedback_@review.getFeedbacks.get(0).getFeedbackId"rows="4" @if(review.getReviewStatus.name() == "COMPLETED") {
-                                                    @("disabled")
-                                                }>
-                                                @review.getFeedbacks.get(0).getFeedbackText</textarea>
+                                                <textarea class="form-control question-feedback mb-3" name="feedback_@review.getFeedbacks.get(0).getFeedbackId"rows="4" @if(review.getReviewStatus.name() == "COMPLETED") { @("disabled")}>@review.getFeedbacks.get(0).getFeedbackText</textarea>
                                             </div>
                                         </div>
                                     } else {
@@ -211,10 +225,7 @@
                                                     <label class="form-label fw-medium">@feedback.getQuestionText</label>
                                                     <textarea class="form-control question-feedback mb-3"
                                                     name="feedback_@feedback.getFeedbackId"
-                                                    rows="2" @if(review.getReviewStatus.name() == "COMPLETED") {
-                                                        @("disabled")
-                                                    }>
-                                                    @feedback.getFeedbackText</textarea>
+                                                    rows="2" @if(review.getReviewStatus.name() == "COMPLETED") { @("disabled") }>@feedback.getFeedbackText</textarea>
                                                     @if(feedback.getQuestionText != "Overall Feedback Comment") {
                                                         <div class="d-flex align-items-center mb-2">
                                                             <span class="me-2">Mark: </span>

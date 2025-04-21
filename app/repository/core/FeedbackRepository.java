@@ -56,11 +56,11 @@ public class FeedbackRepository {
    * Finds feedback received by a student for a list of course codes.
    *
    * @param userId the ID of the student
-   * @param courseCodes a list of course codes
+   * @param courseIds a list of course codes
    * @return a CompletionStage containing a list of Feedback objects
    */
   public CompletionStage<List<Feedback>> findFeedbacksReceivedByStudent(
-      Long userId, List<String> courseCodes) {
+      Long userId, List<Long> courseIds) {
     return CompletableFuture.supplyAsync(
         () ->
             jpaApi.withTransaction(
@@ -68,10 +68,10 @@ public class FeedbackRepository {
                   try {
                     return entityManager
                         .createQuery(
-                            "SELECT f FROM Feedback f WHERE f.reviewTask.reviewee.userId = :userId AND f.reviewTask.assignment.course.courseCode IN :courseCodes",
+                            "SELECT f FROM Feedback f WHERE f.reviewTask.reviewee.userId = :userId AND f.reviewTask.assignment.course.courseId IN :courseIds",
                             Feedback.class)
                         .setParameter("userId", userId)
-                        .setParameter("courseCodes", courseCodes)
+                        .setParameter("courseIds", courseIds)
                         .getResultList();
                   } catch (NoResultException e) {
                     return List.of();

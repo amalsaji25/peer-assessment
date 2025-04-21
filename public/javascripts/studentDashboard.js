@@ -188,6 +188,15 @@ class ReviewFormHandler {
         this.bsModal.show();
 
         try {
+
+            const reviewCard = document.querySelector(`.card[data-review-task-id="${reviewTaskId}"]`);
+            const reviewStatus = reviewCard?.dataset?.reviewStatus || "PENDING";
+
+            // Disable Save Draft button if already submitted
+            this.saveDraftBtn.disabled = (reviewStatus === "COMPLETED");
+            this.submitReviewBtn.disabled = (reviewStatus === "COMPLETED");
+
+
             const hiddenFormContent = document.getElementById(`review-form-content-${reviewTaskId}`);
             if (!hiddenFormContent) throw new Error("Form content not found for review task");
 

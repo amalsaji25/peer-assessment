@@ -1,3 +1,4 @@
+@import scala.collection.immutable.List
 @import models.dto.PeerReviewSummaryDTO
 @(request: play.mvc.Http.Request, professorName: String, professorRole: String, studentCount: Int, assignmentCount: Int, activeCourseCount: Int, assignments: List[Assignment], peerReviewAssignments: List[PeerReviewSummaryDTO])
 
@@ -100,7 +101,7 @@
                                 <i class="bi bi-plus-circle me-2"></i>Create Assignment
                             </button>
                             <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#export-data-modal">
-                                <i class="bi bi-download me-2"></i>Export Data
+                                <i class="bi bi-download me-2"></i>View Reports
                             </button>
                             <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delete-assignment-modal">
                                 <i class="bi bi-trash me-2"></i>Delete Assignment
@@ -170,14 +171,9 @@
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center mt-2">
                                             <div class="d-flex gap-2">
-                                                @defining(assignment.getStatus) { status =>
-                                                    @if(status != "completed") {
-                                                        <button class="btn btn-sm btn-outline-secondary edit-assignment-btn"
-                                                        data-assignment-id="@assignment.getAssignmentId">
-                                                            Edit
-                                                        </button>
-                                                    }
-                                                }
+                                                <button class="btn btn-sm btn-outline-secondary edit-assignment-btn" data-assignment-id="@assignment.getAssignmentId">
+                                                    Edit
+                                                </button>
                                             <button class="btn btn-sm btn-outline-secondary view-submissions-btn" data-assignment-id=@assignment.getAssignmentId>View Submissions</button>
                                             </div>
                                             <div class="d-flex align-items-center">
@@ -381,7 +377,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exportDataModalLabel">Export Data</h5>
+                    <h5 class="modal-title" id="exportDataModalLabel">Reports</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -718,8 +714,8 @@
                                         <i class="bi bi-pencil-square text-primary"></i>
                                     </div>
                                     <div>
-                                        <h6 class="mb-1">Edit an assigned course</h6>
-                                        <p class="text-muted small mb-0">Unassign from existing courses</p>
+                                        <h6 class="mb-1">Drop course</h6>
+                                        <p class="text-muted small mb-0">Delete an assigned courses</p>
                                     </div>
                                 </div>
                             </div>
@@ -785,7 +781,7 @@
                                 <div id="course-info"></div>
                                 <div class="mt-3">
                                     <button type="button" id="unassign-course-btn" class="btn btn-danger">
-                                        Unassign from Course</button>
+                                        Drop from Course</button>
                                 </div>
                             </div>
                             <div class="text-end">

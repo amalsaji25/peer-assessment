@@ -112,13 +112,13 @@ public class EnrollmentRepository implements Repository<Enrollment> {
      * @param userId the ID of the student
      * @return  a CompletableFuture containing a list of course codes
      */
-    public CompletableFuture<List<String>> findCourseCodesByStudentId(Long userId){
+    public CompletableFuture<List<Long>> findCourseCodesByStudentId(Long userId){
         return CompletableFuture.supplyAsync(
                 () ->
                         jpaApi.withTransaction(
                                 entityManager -> {
-                                    String queryString = "SELECT e.course.courseCode FROM Enrollment e WHERE e.student.userId=:userId";
-                                    TypedQuery<String> query = entityManager.createQuery(queryString, String.class);
+                                    String queryString = "SELECT e.course.courseId FROM Enrollment e WHERE e.student.userId=:userId";
+                                    TypedQuery<Long> query = entityManager.createQuery(queryString, Long.class);
                                     query.setParameter("userId", userId);
                                     return query.getResultList();
                                 }),
@@ -160,16 +160,17 @@ public class EnrollmentRepository implements Repository<Enrollment> {
      * @param courseCode the course code
      * @return a CompletableFuture containing true if the student is enrolled, false otherwise
      */
-    public CompletableFuture<Boolean> isStudentEnrolledInCourse(Long userId, String courseCode){
+    public CompletableFuture<Optional<Long>> isStudentEnrolledInCourse(Long userId, String courseCode){
         return CompletableFuture.supplyAsync(
                 () ->
                         jpaApi.withTransaction(
                                 entityManager -> {
-                                    String queryString = "SELECT COUNT(e) FROM Enrollment e WHERE e.student.userId=:userId AND e.course.courseCode=:courseCode";
+                                    String queryString = "SELECT e.course.courseId FROM Enrollment e WHERE e.student.userId=:userId AND e.course.courseCode=:courseCode";
                                     TypedQuery<Long> query = entityManager.createQuery(queryString, Long.class);
                                     query.setParameter("userId", userId);
                                     query.setParameter("courseCode", courseCode);
-                                    return query.getSingleResult() > 0;
+                                    List<Long> result = query.getResultList();
+                                    return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
                                 }),
                 executorService
         );

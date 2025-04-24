@@ -197,33 +197,51 @@ public class DashboardRepository {
      * @return A CompletableFuture containing a list of Assignment objects.
      */
     public CompletableFuture<List<Assignment>> getAssignmentsForStudent(Long userId, String courseCode) {
-        return CompletableFuture.supplyAsync(() -> jpaApi.withTransaction(entityManager -> {
-            if (courseCode == null || courseCode.equalsIgnoreCase("all")) {
-                // Fetch the enrolled course codes for student
-                TypedQuery<String> courseQuery = entityManager.createQuery(
-                        "SELECT e.course.courseCode FROM Enrollment e WHERE e.student.userId = :userId", String.class);
-                courseQuery.setParameter("userId", userId);
-                List<String> courseCodes = courseQuery.getResultList();
+    return CompletableFuture.supplyAsync(
+        () ->
+            jpaApi.withTransaction(
+                entityManager -> {
+                  if (courseCode == null || courseCode.equalsIgnoreCase("all")) {
+                    // Fetch the enrolled course codes for student
+                    TypedQuery<Long> courseQuery =
+                        entityManager.createQuery(
+                            "SELECT e.course.courseId FROM Enrollment e WHERE e.student.userId = :userId",
+                            Long.class);
+                    courseQuery.setParameter("userId", userId);
+                    List<Long> courseIds = courseQuery.getResultList();
+                    if (courseIds.isEmpty()) return Collections.emptyList();
 
-                if (courseCodes.isEmpty()) return Collections.emptyList();
+                    // Fetch assignments for course codes
+                    TypedQuery<Assignment> assignmentQuery =
+                        entityManager.createQuery(
+                            "SELECT a FROM Assignment a WHERE a.course.courseId IN :courseIds AND a.startDate <= CURRENT_DATE AND a.status IN (:status)",
+                            Assignment.class);
+                    assignmentQuery.setParameter("courseIds", courseIds);
+                    assignmentQuery.setParameter("status", Set.of(Status.ACTIVE, Status.COMPLETED));
+                    return assignmentQuery.getResultList();
+                  } else {
+                    // Fetch assignments for a specific course
 
-                // Fetch assignments for course codes
-                TypedQuery<Assignment> assignmentQuery = entityManager.createQuery(
-                        "SELECT a FROM Assignment a WHERE a.course.courseCode IN :courseCodes AND a.startDate <= CURRENT_DATE",
-                        Assignment.class
-                );
-                assignmentQuery.setParameter("courseCodes", courseCodes);
-                return assignmentQuery.getResultList();
-            } else {
-                // Fetch assignments for a specific course
-                TypedQuery<Assignment> assignmentQuery = entityManager.createQuery(
-                        "SELECT a FROM Assignment a WHERE a.course.courseCode = :courseCode AND a.startDate <= CURRENT_DATE",
-                        Assignment.class
-                );
-                assignmentQuery.setParameter("courseCode", courseCode);
-                return assignmentQuery.getResultList();
-            }
-        }), executor);
+                    // Get the course ID based on the course code From the enrollment table matching the userId
+                    Long courseId =
+                        entityManager
+                            .createQuery(
+                                "SELECT e.course.courseId FROM Enrollment e WHERE e.student.userId = :userId AND e.course.courseCode = :courseCode",
+                                Long.class)
+                            .setParameter("userId", userId)
+                            .setParameter("courseCode", courseCode)
+                            .getSingleResult();
+
+                    TypedQuery<Assignment> assignmentQuery =
+                        entityManager.createQuery(
+                            "SELECT a FROM Assignment a WHERE a.course.courseId = :courseId AND a.startDate <= CURRENT_DATE AND a.status IN (:status)",
+                            Assignment.class);
+                    assignmentQuery.setParameter("courseId", courseId);
+                    assignmentQuery.setParameter("status", Set.of(Status.ACTIVE, Status.COMPLETED));
+                    return assignmentQuery.getResultList();
+                  }
+                }),
+        executor);
     }
 
 
@@ -262,7 +280,6 @@ public class DashboardRepository {
                 reviewTasks = entityManager.createQuery(
                                 "SELECT rt FROM ReviewTask rt " +
                                         "WHERE rt.reviewer.userId = :userId " +
-                                        "AND rt.status = models.enums.Status.PENDING " +
                                         "AND rt.assignment.course.courseCode = :courseCode", ReviewTask.class)
                         .setParameter("userId", userId)
                         .setParameter("courseCode", courseCode)

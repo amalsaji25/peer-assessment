@@ -45,14 +45,14 @@ public class EnrollmentServiceImpl implements EnrollmentService {
    * @return a CompletableFuture containing the count of students enrolled in the course
    */
   @Override
-  public CompletableFuture<List<String>> findStudentEnrolledCourseCodes(
+  public CompletableFuture<List<Long>> findStudentEnrolledCourseCodes(
       Long userId, String courseCode) {
     if (courseCode == null || courseCode.equalsIgnoreCase("all")) {
       return enrollmentRepository.findCourseCodesByStudentId(userId);
     } else {
       return enrollmentRepository
           .isStudentEnrolledInCourse(userId, courseCode)
-          .thenApply(isEnrolled -> isEnrolled ? List.of(courseCode) : List.of());
+          .thenApply(optionalCourseId -> optionalCourseId.map(List::of).orElse(List.of()));
     }
   }
 

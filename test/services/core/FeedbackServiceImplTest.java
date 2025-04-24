@@ -51,7 +51,7 @@ public class FeedbackServiceImplTest {
 
         // Mock course enrollment
         when(enrollmentService.findStudentEnrolledCourseCodes(userId, courseCode))
-                .thenReturn(CompletableFuture.completedFuture(List.of("CS101")));
+                .thenReturn(CompletableFuture.completedFuture(List.of(1L)));
 
         // Mock assignment
         Assignment assignment = mock(Assignment.class);
@@ -77,7 +77,7 @@ public class FeedbackServiceImplTest {
 
         List<Feedback> feedbacks = List.of(feedback, feedback); // two for same question
 
-        when(feedbackRepository.findFeedbacksReceivedByStudent(userId, List.of("CS101")))
+        when(feedbackRepository.findFeedbacksReceivedByStudent(userId, List.of(1L)))
                 .thenReturn(CompletableFuture.completedFuture(feedbacks));
 
         List<FeedbacksReceivedDTO> result =
@@ -89,6 +89,6 @@ public class FeedbackServiceImplTest {
         assertEquals(10, dto.getTotalMarks());
         assertEquals(7, dto.getObtainedMarks()); // average of [7,7] = 7
 
-        verify(feedbackRepository).findFeedbacksReceivedByStudent(userId, List.of("CS101"));
+        verify(feedbackRepository).findFeedbacksReceivedByStudent(userId, List.of(1L));
     }
 }

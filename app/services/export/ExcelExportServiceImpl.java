@@ -153,7 +153,7 @@ public class ExcelExportServiceImpl implements ExportService {
               row.createCell(dataIdx).setCellValue(dto.getStudentName());
               row.getCell(dataIdx++).setCellStyle(normalStyle);
 
-              row.createCell(dataIdx).setCellValue("Group " + dto.getGroupId());
+              row.createCell(dataIdx).setCellValue("Group " + dto.getGroupName());
               row.getCell(dataIdx++).setCellStyle(normalStyle);
 
               Map<String, Float> scoreMap =

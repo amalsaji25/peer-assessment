@@ -59,7 +59,7 @@ public class FeedbackServiceImpl implements FeedbackService {
     return enrollmentService
         .findStudentEnrolledCourseCodes(userId, courseCode)
         .thenCompose(
-            courseCodes -> feedbackRepository.findFeedbacksReceivedByStudent(userId, courseCodes))
+                courseIds -> feedbackRepository.findFeedbacksReceivedByStudent(userId, courseIds))
         .thenApply(
             feedbacks -> {
               Map<Assignment, List<Feedback>> groupedByAssignment =
@@ -68,8 +68,7 @@ public class FeedbackServiceImpl implements FeedbackService {
                           feedback -> {
                             ReviewTask rt = feedback.getReviewTask();
                             Assignment assignment = rt.getAssignment();
-                            return rt.getStatus() == Status.COMPLETED
-                                && assignment.getDueDate().isBefore(LocalDate.now());
+                            return assignment.getDueDate().isBefore(LocalDate.now());
                           })
                       .collect(
                           Collectors.groupingBy(

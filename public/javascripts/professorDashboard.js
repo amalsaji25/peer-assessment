@@ -333,11 +333,20 @@ class UiService {
     }
 
     static async populateAssignmentForm(assignment, formPrefix) {
+
         const editModal = document.getElementById("edit-assignment-modal")
         const mode = editModal.getAttribute("data-mode")
 
         const modalTitle = editModal.querySelector(".modal-title")
         const termWrapper = document.getElementById("edit-term-wrapper")
+
+        // alert
+        const form = document.getElementById("edit-assignment-form")
+        // Remove any existing alert
+        const existingNotice = form.querySelector(".alert-warning")
+        if (existingNotice) {
+            existingNotice.remove()
+        }
 
         // Template mode adjustments
         if (mode === "template") {
@@ -351,7 +360,12 @@ class UiService {
             // Show course select
             document.getElementById("edit-course-select").classList.remove("d-none")
             document.getElementById("edit-course-select").disabled = true
+            document.getElementById("edit-course-select").required = true
             document.getElementById("edit-course-select").innerHTML = '<option value="">Select Course</option>'
+
+            document.getElementById("edit-assignment-title").readOnly = false
+            document.getElementById("edit-start-date").readOnly = false
+            document.getElementById("edit-assignment-description").readOnly = false
 
             // Update modal heading
             modalTitle.textContent = "Create New Assignment"
@@ -417,6 +431,40 @@ class UiService {
             }
             reviewContainer.appendChild(questionElement)
         })
+
+        // Enable only the due date field if the assignment is active or closed
+        if (mode === "edit" && (assignment.status === "active" || assignment.status === "completed")) {
+            // Disable all fields except due date
+            document.getElementById("edit-assignment-title").readOnly = true
+            document.getElementById("edit-start-date").readOnly = true
+            document.getElementById("edit-assignment-description").readOnly = true
+            document.getElementById("edit-course-display").readOnly = true
+
+            // Hide or disable review questions
+            const reviewQuestionsSection = document.getElementById("edit-review-questions")
+            if (reviewQuestionsSection) {
+                reviewQuestionsSection.querySelectorAll("input, textarea, button").forEach(el => {
+                    el.readOnly = true
+                })
+
+                reviewQuestionsSection.querySelectorAll(".remove-question").forEach(btn => {
+                    btn.style.display = "none"
+                })
+            }
+
+            // Hide add question button
+            const addQuestionBtn = document.getElementById("edit-add-question-btn")
+            if (addQuestionBtn) addQuestionBtn.style.display = "none"
+
+            // Show alert
+            const form = document.getElementById("edit-assignment-form")
+
+            // Create a new alert
+            const notice = document.createElement("div")
+            notice.className = "alert alert-warning mb-3"
+            notice.innerHTML = "<strong>Note:</strong> Only the due date can be edited for active or closed assignments."
+            form.prepend(notice)
+        }
     }
 
     static populateSubmissionsView(submissionData) {
@@ -646,6 +694,10 @@ class EventHandlers {
             if (editAssignmentModal) {
                 editAssignmentModal.addEventListener("shown.bs.modal", () => {
                     UiService.setMinimumDateForInputs()
+                })
+
+                editAssignmentModal.addEventListener("hidden.bs.modal", () => {
+                    editAssignmentModal.setAttribute("data-mode", "edit")
                 })
             }
 
@@ -1149,6 +1201,31 @@ class EventHandlers {
                     }
                 }
             })
+        }
+        // Reset export modal on close
+        const exportDataModal = document.getElementById("export-data-modal");
+        if (exportDataModal) {
+            exportDataModal.addEventListener("hidden.bs.modal", () => {
+                const exportForm = document.getElementById("export-data-form");
+                if (exportForm) exportForm.reset();
+
+                const courseSelect = document.getElementById("export-course-select");
+                if (courseSelect) {
+                    courseSelect.innerHTML = '<option value="">Select Course</option>';
+                    courseSelect.disabled = true;
+                }
+
+                const assignmentSelect = document.getElementById("export-assignment-select");
+                if (assignmentSelect) {
+                    assignmentSelect.innerHTML = '<option value="">Select Assignment</option>';
+                    assignmentSelect.disabled = true;
+                }
+
+                const summaryBtn = document.getElementById("summary-results-btn");
+                const detailedBtn = document.getElementById("detailed-results-btn");
+                if (summaryBtn) summaryBtn.disabled = true;
+                if (detailedBtn) detailedBtn.disabled = true;
+            });
         }
 
     }

@@ -81,7 +81,7 @@
                         <tr>
                             <td>@student.getUserId()</td>
                             <td class="text-start">@student.getUserName()</td>
-                            <td>Group @group.getGroupId()</td>
+                            <td>@group.getGroupName()</td>
                             @for(q <- student.getEvaluationMatrix.asScala) {
                                 <td>@q.getAverageMarkForQuestion().formatted("%.2f")</td>
                             }
